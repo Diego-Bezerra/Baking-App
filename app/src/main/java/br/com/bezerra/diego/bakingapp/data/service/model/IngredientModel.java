@@ -1,16 +1,16 @@
 package br.com.bezerra.diego.bakingapp.data.service.model;
 
-public class IngredientsModel {
+public class IngredientModel {
 
-    private int quantity;
+    private double quantity;
     private String measure;
     private String ingredient;
 
-    public int getQuantity() {
+    public double getQuantity() {
         return quantity;
     }
 
-    public void setQuantity(int quantity) {
+    public void setQuantity(double quantity) {
         this.quantity = quantity;
     }
 

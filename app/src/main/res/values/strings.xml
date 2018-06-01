@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Baking App</string>
+    <string name="error_loading_recipes_server">Error on loading recipes from server :(</string>
 </resources>

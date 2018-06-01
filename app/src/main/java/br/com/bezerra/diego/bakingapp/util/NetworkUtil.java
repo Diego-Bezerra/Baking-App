@@ -1,4 +1,4 @@
-package br.com.bezerra.diego.bakingapp.data.util;
+package br.com.bezerra.diego.bakingapp.util;
 
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;

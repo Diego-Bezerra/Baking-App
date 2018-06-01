@@ -8,8 +8,8 @@ public class RecipeModel {
     private String name;
     private int servings;
     private String image;
-    private List<IngredientsModel> ingredients;
-    private List<StepsModel> steps;
+    private List<IngredientModel> ingredients;
+    private List<StepModel> steps;
 
     public long getId() {
         return id;
@@ -43,19 +43,19 @@ public class RecipeModel {
         this.image = image;
     }
 
-    public List<IngredientsModel> getIngredients() {
+    public List<IngredientModel> getIngredients() {
         return ingredients;
     }
 
-    public void setIngredients(List<IngredientsModel> ingredients) {
+    public void setIngredients(List<IngredientModel> ingredients) {
         this.ingredients = ingredients;
     }
 
-    public List<StepsModel> getSteps() {
+    public List<StepModel> getSteps() {
         return steps;
     }
 
-    public void setSteps(List<StepsModel> steps) {
+    public void setSteps(List<StepModel> steps) {
         this.steps = steps;
     }
 }

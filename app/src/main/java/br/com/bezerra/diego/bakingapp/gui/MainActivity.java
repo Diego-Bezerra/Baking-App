@@ -1,42 +1,66 @@
 package br.com.bezerra.diego.bakingapp.gui;
 
+import android.content.IntentFilter;
+import android.net.ConnectivityManager;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 
-import java.util.List;
-
+import br.com.bezerra.diego.bakingapp.BakingAppApplication;
 import br.com.bezerra.diego.bakingapp.R;
-import br.com.bezerra.diego.bakingapp.data.service.BakingAppService;
-import br.com.bezerra.diego.bakingapp.data.service.model.RecipeModel;
-import br.com.bezerra.diego.bakingapp.data.util.NetworkUtil;
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
+import br.com.bezerra.diego.bakingapp.data.service.BakingAppServiceUtil;
+import br.com.bezerra.diego.bakingapp.util.ConnectivityReceiver;
+import br.com.bezerra.diego.bakingapp.util.ConnectivityReceiver.ConnectivityReceiverListener;
 
-public class MainActivity extends AppCompatActivity implements Callback<List<RecipeModel>> {
+public class MainActivity extends AppCompatActivity implements ConnectivityReceiverListener, LoaderManager.LoaderCallbacks {
+
+    private static final int LODER_ID = 1;
+    ConnectivityReceiver mConnectivityReceiver;
+    private boolean isNetworkReceiverRegistered;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        BakingAppService bakingAppService = NetworkUtil.retrofit.create(BakingAppService.class);
-        Call<List<RecipeModel>> listCall = bakingAppService.getRecipes();
-        listCall.enqueue(this);
-//        try {
-//            listCall.execute();
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
+        getSupportLoaderManager().initLoader(LODER_ID, null, this);
     }
 
     @Override
-    public void onResponse(Call<List<RecipeModel>> call, Response<List<RecipeModel>> response) {
+    protected void onStop() {
+        super.onStop();
+        unregisterReceiver(mConnectivityReceiver);
+        BakingAppApplication.getInstance().setConnectivityListener(null);
+    }
+
+    @Override
+    public void onNetworkConnectionChanged(boolean isConnected) {
+        Log.i("onNetworkConn", "isConnected: " + isConnected);
+        if (!isNetworkReceiverRegistered) {
+            isNetworkReceiverRegistered = true;
+            BakingAppApplication.getInstance().setConnectivityListener(this);
+            IntentFilter filter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
+            mConnectivityReceiver = new ConnectivityReceiver();
+            registerReceiver(mConnectivityReceiver, filter);
+        }
+    }
+
+    @NonNull
+    @Override
+    public Loader onCreateLoader(int id, @Nullable Bundle args) {
+        return BakingAppServiceUtil.syncRecipesData(this, this);
+    }
+
+    @Override
+    public void onLoadFinished(@NonNull Loader loader, Object data) {
         String nada = "";
     }
 
     @Override
-    public void onFailure(Call<List<RecipeModel>> call, Throwable t) {
-        String nada = "";
+    public void onLoaderReset(@NonNull Loader loader) {
+
     }
 }
