@@ -19,8 +19,12 @@ import retrofit2.Response;
 
 public class BakingAppServiceUtil {
 
+    public interface NoConnectivityReceiverListener {
+        void noInternetConnection();
+    }
+
     public static synchronized AsyncTaskLoader<Cursor> syncRecipesData(final Context context
-            , final ConnectivityReceiver.ConnectivityReceiverListener connectivityReceiverListener) {
+            , final NoConnectivityReceiverListener noConnectivityReceiverListener) {
 
         return new AsyncTaskLoader<Cursor>(context) {
 
@@ -38,8 +42,8 @@ public class BakingAppServiceUtil {
                 if (cursor == null || cursor.getCount() == 0) {
 
                     if (!ConnectivityReceiver.isConnected()) {
-                        if (connectivityReceiverListener != null) {
-                            connectivityReceiverListener.onNetworkConnectionChanged(false);
+                        if (noConnectivityReceiverListener != null) {
+                            noConnectivityReceiverListener.noInternetConnection();
                         }
                         return cursor;
                     }
@@ -60,11 +64,12 @@ public class BakingAppServiceUtil {
                             RecipeProviderUtil.bulkInsert(context, recipes);
                             IngredientsProviderUtil.bulkInsert(context, recipes);
                             StepsProviderUtil.bulkInsert(context, recipes);
+                            cursor = RecipeProviderUtil.getAllRecipesCursor(context);
                         }
                     }
                 }
 
-                return RecipeProviderUtil.getAllRecipesCursor(context);
+                return cursor;
             }
         };
     }
