@@ -2,14 +2,14 @@ package br.com.bezerra.diego.bakingapp.data.service.model;
 
 import java.util.List;
 
-public class RecipeModel {
+public class RecipeJsonModel {
 
     private long id;
     private String name;
     private int servings;
     private String image;
-    private List<IngredientModel> ingredients;
-    private List<StepModel> steps;
+    private List<IngredientJsonModel> ingredients;
+    private List<StepJsonModel> steps;
 
     public long getId() {
         return id;
@@ -43,19 +43,19 @@ public class RecipeModel {
         this.image = image;
     }
 
-    public List<IngredientModel> getIngredients() {
+    public List<IngredientJsonModel> getIngredients() {
         return ingredients;
     }
 
-    public void setIngredients(List<IngredientModel> ingredients) {
+    public void setIngredients(List<IngredientJsonModel> ingredients) {
         this.ingredients = ingredients;
     }
 
-    public List<StepModel> getSteps() {
+    public List<StepJsonModel> getSteps() {
         return steps;
     }
 
-    public void setSteps(List<StepModel> steps) {
+    public void setSteps(List<StepJsonModel> steps) {
         this.steps = steps;
     }
 }

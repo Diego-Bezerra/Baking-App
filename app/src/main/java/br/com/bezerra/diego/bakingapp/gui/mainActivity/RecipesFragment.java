@@ -1,5 +1,6 @@
-package br.com.bezerra.diego.bakingapp.gui;
+package br.com.bezerra.diego.bakingapp.gui.mainActivity;
 
+import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.Cursor;
 import android.net.ConnectivityManager;
@@ -21,12 +22,13 @@ import android.widget.TextView;
 import br.com.bezerra.diego.bakingapp.BakingAppApplication;
 import br.com.bezerra.diego.bakingapp.R;
 import br.com.bezerra.diego.bakingapp.data.service.BakingAppServiceUtil;
+import br.com.bezerra.diego.bakingapp.gui.detailsActivity.DetailsActivity;
 import br.com.bezerra.diego.bakingapp.util.ConnectivityReceiver;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
 public class RecipesFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>
-        , BakingAppServiceUtil.NoConnectivityReceiverListener, ConnectivityReceiver.ConnectivityReceiverListener {
+        , BakingAppServiceUtil.NoConnectivityReceiverListener, ConnectivityReceiver.ConnectivityReceiverListener, RecipesListAdapter.RecipeAdapterItemClickListerner {
 
     private static final int LOADER_ID = 1;
 
@@ -64,11 +66,9 @@ public class RecipesFragment extends Fragment implements LoaderManager.LoaderCal
         }
         recipesList.setHasFixedSize(true);
         listAdapter = new RecipesListAdapter();
+        listAdapter.setRecipeAdapterItemClickListerner(this);
         recipesList.setAdapter(listAdapter);
     }
-
-
-
 
     @Override
     public void noInternetConnection() {
@@ -113,6 +113,13 @@ public class RecipesFragment extends Fragment implements LoaderManager.LoaderCal
     @Override
     public void onLoaderReset(@NonNull Loader loader) {
 
+    }
+
+    @Override
+    public void onItemClick(int recipeId) {
+        Intent intent = new Intent(getContext(), DetailsActivity.class);
+        intent.putExtra(DetailsActivity.RECIPE_ID_EXTRA, recipeId);
+        startActivity(intent);
     }
 }
 

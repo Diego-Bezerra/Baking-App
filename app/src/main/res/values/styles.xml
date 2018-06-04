@@ -25,4 +25,18 @@
         <item name="android:visibility">gone</item>
     </style>
 
+    <style name="LeftImageView">
+        <item name="android:layout_width">80dp</item>
+        <item name="android:layout_height">80dp</item>
+        <item name="android:layout_marginRight">@dimen/default_half</item>
+        <item name="android:padding">@dimen/default_half</item>
+        <item name="android:scaleType">fitCenter</item>
+    </style>
+
+    <style name="CardTitleText" parent="Base.TextAppearance.AppCompat.Title">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginLeft">@dimen/default_half</item>
+    </style>
+
 </resources>

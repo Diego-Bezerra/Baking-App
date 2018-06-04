@@ -1,4 +1,4 @@
-package br.com.bezerra.diego.bakingapp.gui;
+package br.com.bezerra.diego.bakingapp.gui.mainActivity;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;

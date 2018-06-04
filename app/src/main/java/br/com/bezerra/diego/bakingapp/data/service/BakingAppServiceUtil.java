@@ -11,7 +11,7 @@ import java.util.List;
 import br.com.bezerra.diego.bakingapp.data.database.util.IngredientsProviderUtil;
 import br.com.bezerra.diego.bakingapp.data.database.util.RecipeProviderUtil;
 import br.com.bezerra.diego.bakingapp.data.database.util.StepsProviderUtil;
-import br.com.bezerra.diego.bakingapp.data.service.model.RecipeModel;
+import br.com.bezerra.diego.bakingapp.data.service.model.RecipeJsonModel;
 import br.com.bezerra.diego.bakingapp.util.ConnectivityReceiver;
 import br.com.bezerra.diego.bakingapp.util.NetworkUtil;
 import retrofit2.Call;
@@ -49,9 +49,9 @@ public class BakingAppServiceUtil {
                     }
 
                     BakingAppService bakingAppService = NetworkUtil.retrofit.create(BakingAppService.class);
-                    Call<List<RecipeModel>> listCall = bakingAppService.getRecipes();
+                    Call<List<RecipeJsonModel>> listCall = bakingAppService.getRecipes();
 
-                    Response<List<RecipeModel>> response = null;
+                    Response<List<RecipeJsonModel>> response = null;
                     try {
                         response = listCall.execute();
                     } catch (IOException e) {
@@ -59,7 +59,7 @@ public class BakingAppServiceUtil {
                     }
 
                     if (response != null) {
-                        List<RecipeModel> recipes = response.body();
+                        List<RecipeJsonModel> recipes = response.body();
                         if (recipes != null && recipes.size() > 0) {
                             RecipeProviderUtil.bulkInsert(context, recipes);
                             IngredientsProviderUtil.bulkInsert(context, recipes);

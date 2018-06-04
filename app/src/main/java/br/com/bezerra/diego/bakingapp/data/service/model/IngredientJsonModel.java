@@ -1,6 +1,6 @@
 package br.com.bezerra.diego.bakingapp.data.service.model;
 
-public class IngredientModel {
+public class IngredientJsonModel {
 
     private double quantity;
     private String measure;

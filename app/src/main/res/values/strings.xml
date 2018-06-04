@@ -3,4 +3,8 @@
     <string name="error_loading_recipes_server">Error on loading recipes from server :(</string>
     <string name="no_recipes_found">No recipes found :(</string>
     <string name="serving_format">Servings: %s</string>
+    <string name="ingredients">Ingredients</string>
+    <string name="step_title_format">Step %d</string>
+    <string name="activity_detail_label">Detail Activity</string>
+    <string name="step">Step</string>
 </resources>

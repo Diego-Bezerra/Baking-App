@@ -1,4 +1,4 @@
-package br.com.bezerra.diego.bakingapp.gui;
+package br.com.bezerra.diego.bakingapp.gui.mainActivity;
 
 import android.database.Cursor;
 import android.support.annotation.NonNull;
@@ -19,6 +19,15 @@ import butterknife.ButterKnife;
 public class RecipesListAdapter extends RecyclerView.Adapter<RecipesListAdapter.ViewHolder> {
 
     private Cursor mCursor;
+    private RecipeAdapterItemClickListerner recipeAdapterItemClickListerner;
+
+    public interface RecipeAdapterItemClickListerner {
+        void onItemClick(int recipeId);
+    }
+
+    public void setRecipeAdapterItemClickListerner(RecipeAdapterItemClickListerner recipeAdapterItemClickListerner) {
+        this.recipeAdapterItemClickListerner = recipeAdapterItemClickListerner;
+    }
 
     @NonNull
     @Override
@@ -28,7 +37,7 @@ public class RecipesListAdapter extends RecyclerView.Adapter<RecipesListAdapter.
     }
 
     @Override
-    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull ViewHolder holder, final int position) {
 
         mCursor.moveToPosition(position);
         String imgUrl = mCursor.getString(mCursor.getColumnIndex(RecipeContract.IMAGE));
@@ -38,10 +47,20 @@ public class RecipesListAdapter extends RecyclerView.Adapter<RecipesListAdapter.
         if (imgUrl != null && !imgUrl.isEmpty()) {
             Picasso.get().load(imgUrl).into(holder.recipeImage);
         }
+
         holder.title.setText(title);
         String servingFormat = holder.itemView.getContext().getString(R.string.serving_format);
         holder.serving.setText(String.format(servingFormat, servings));
-
+        holder.itemView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (recipeAdapterItemClickListerner != null) {
+                    mCursor.moveToPosition(position);
+                    int recipeId = mCursor.getInt(mCursor.getColumnIndex(RecipeContract._ID));
+                    recipeAdapterItemClickListerner.onItemClick(recipeId);
+                }
+            }
+        });
     }
 
     @Override

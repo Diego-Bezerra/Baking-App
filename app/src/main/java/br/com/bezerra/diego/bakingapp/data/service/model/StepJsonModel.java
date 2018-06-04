@@ -1,6 +1,6 @@
 package br.com.bezerra.diego.bakingapp.data.service.model;
 
-public class StepModel {
+public class StepJsonModel {
 
     private long id;
     private String shortDescription;

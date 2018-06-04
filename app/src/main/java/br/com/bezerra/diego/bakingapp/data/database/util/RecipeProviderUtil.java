@@ -9,7 +9,7 @@ import java.util.List;
 
 import br.com.bezerra.diego.bakingapp.data.database.BakingAppProvider;
 import br.com.bezerra.diego.bakingapp.data.database.contract.RecipeContract;
-import br.com.bezerra.diego.bakingapp.data.service.model.RecipeModel;
+import br.com.bezerra.diego.bakingapp.data.service.model.RecipeJsonModel;
 
 public class RecipeProviderUtil {
 
@@ -23,15 +23,15 @@ public class RecipeProviderUtil {
                 , null, null, null, null);
     }
 
-    public static int bulkInsert(Context context, List<RecipeModel> recipes) {
+    public static int bulkInsert(Context context, List<RecipeJsonModel> recipes) {
         ContentValues[] values = getRecipesValues(recipes);
         return context.getContentResolver().bulkInsert(BakingAppProvider.Recipes.CONTENT_URI, values);
     }
 
-    private static ContentValues[] getRecipesValues(List<RecipeModel> recipes) {
+    private static ContentValues[] getRecipesValues(List<RecipeJsonModel> recipes) {
         ContentValues[] values = new ContentValues[recipes.size()];
         int index = 0;
-        for (RecipeModel recipeModel : recipes) {
+        for (RecipeJsonModel recipeModel : recipes) {
             values[index] = new ContentValues();
             values[index].put(RecipeContract._ID, recipeModel.getId());
             values[index].put(RecipeContract.NAME, recipeModel.getName());
