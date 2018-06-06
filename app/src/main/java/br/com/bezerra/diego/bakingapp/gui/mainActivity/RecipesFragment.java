@@ -42,28 +42,55 @@ public class RecipesFragment extends Fragment implements LoaderManager.LoaderCal
     private RecipesListAdapter listAdapter;
     private ConnectivityReceiver mConnectivityReceiver;
 
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+    }
+
+    @Override
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+    }
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_recipes, container, false);
         ButterKnife.bind(this, view);
 
-        boolean isSmallestWidth = getResources().getBoolean(R.bool.isSmallestWidth);
-        setupRecipesList(isSmallestWidth);
-
-        if (getActivity() != null) {
-            getActivity().getSupportLoaderManager().initLoader(LOADER_ID, null, this);
-        }
-
         return view;
     }
 
-    private void setupRecipesList(boolean isSmallestWidth) {
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        setupRecipesList(savedInstanceState);
+        if (getActivity() != null) {
+            getActivity().getSupportLoaderManager().initLoader(LOADER_ID, null, this);
+        }
+    }
+
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        //outState.putParcelable("ls", recipesList.getLayoutManager().onSaveInstanceState());
+        outState.putInt("ls", 1);
+    }
+
+    private void setupRecipesList(@Nullable Bundle savedInstanceState) {
+
+        boolean isSmallestWidth = getResources().getBoolean(R.bool.isSmallestWidth);
+
         if (isSmallestWidth) {
             recipesList.setLayoutManager(new GridLayoutManager(getContext(), 4));
         } else {
             recipesList.setLayoutManager(new LinearLayoutManager(getContext()));
         }
+
+        if (savedInstanceState != null && savedInstanceState.containsKey("ls")) {
+            recipesList.getLayoutManager().onRestoreInstanceState(savedInstanceState.getParcelable("ls"));
+        }
+
         recipesList.setHasFixedSize(true);
         listAdapter = new RecipesListAdapter();
         listAdapter.setRecipeAdapterItemClickListerner(this);
@@ -99,9 +126,9 @@ public class RecipesFragment extends Fragment implements LoaderManager.LoaderCal
     @Override
     public void onLoadFinished(@NonNull Loader loader, Cursor data) {
         if (data != null && data.getCount() > 0) {
+            listAdapter.swipeCursor(data);
             recipesList.setVisibility(View.VISIBLE);
             noResults.setVisibility(View.GONE);
-            listAdapter.swipeCursor(data);
         } else {
             recipesList.setVisibility(View.GONE);
             noResults.setVisibility(View.VISIBLE);

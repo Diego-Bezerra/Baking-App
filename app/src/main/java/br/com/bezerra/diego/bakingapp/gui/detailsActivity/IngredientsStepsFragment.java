@@ -32,9 +32,10 @@ import butterknife.ButterKnife;
 
 public class IngredientsStepsFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
 
-    private static final int LOADER_INGREDIENTS_ID = 1;
-    private static final int LOADER_STEPS_ID = 2;
+    private static final int LOADER_INGREDIENTS_ID = 2;
+    private static final int LOADER_STEPS_ID = 3;
     public static final String RECIPE_ID_EXTRA = "recipe_id_extra";
+    public static final String FRAGMENT_TAG = "IngredientsStepsFragment";
 
     @BindView(R.id.ingredientsStepsList)
     RecyclerView ingredientsStepsList;
@@ -61,6 +62,14 @@ public class IngredientsStepsFragment extends Fragment implements LoaderManager.
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_ingredients_steps, container, false);
         ButterKnife.bind(this, view);
+
+        return view;
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
         setupIngredientsStepsList();
 
         Bundle bundle = getArguments();
@@ -68,8 +77,6 @@ public class IngredientsStepsFragment extends Fragment implements LoaderManager.
             recipeId = bundle.getInt(RECIPE_ID_EXTRA);
             getActivity().getSupportLoaderManager().initLoader(LOADER_INGREDIENTS_ID, null, this);
         }
-
-        return view;
     }
 
     private void setupIngredientsStepsList() {
@@ -77,11 +84,6 @@ public class IngredientsStepsFragment extends Fragment implements LoaderManager.
         ingredientsStepsList.setHasFixedSize(true);
         ingredientsStepsAdapter = new IngredientsStepsAdapter();
         ingredientsStepsList.setAdapter(ingredientsStepsAdapter);
-    }
-
-    @Override
-    public void onSaveInstanceState(@NonNull Bundle outState) {
-        super.onSaveInstanceState(outState);
     }
 
     @NonNull
@@ -102,10 +104,10 @@ public class IngredientsStepsFragment extends Fragment implements LoaderManager.
     public void onLoadFinished(@NonNull Loader loader, Cursor data) {
         switch (loader.getId()) {
             case LOADER_INGREDIENTS_ID:
+                addIngredients(data);
                 if (getActivity() != null) {
                     getActivity().getSupportLoaderManager().initLoader(LOADER_STEPS_ID, null, this);
                 }
-                addIngredients(data);
                 break;
             case LOADER_STEPS_ID:
                 addSteps(data);
@@ -119,7 +121,6 @@ public class IngredientsStepsFragment extends Fragment implements LoaderManager.
 
                 break;
         }
-
     }
 
     @Override
@@ -154,6 +155,9 @@ public class IngredientsStepsFragment extends Fragment implements LoaderManager.
     }
 
     private void addSteps(Cursor data) {
+
+        data.moveToFirst();
+
         while (data.moveToNext()) {
             StepModelAdapter stepModelAdapter = new StepModelAdapter();
             stepModelAdapter.setId(data.getInt(data.getColumnIndex(StepContract._ID)));
