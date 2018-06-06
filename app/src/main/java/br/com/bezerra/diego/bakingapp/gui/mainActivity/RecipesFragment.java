@@ -70,13 +70,6 @@ public class RecipesFragment extends Fragment implements LoaderManager.LoaderCal
         }
     }
 
-    @Override
-    public void onSaveInstanceState(@NonNull Bundle outState) {
-        super.onSaveInstanceState(outState);
-        //outState.putParcelable("ls", recipesList.getLayoutManager().onSaveInstanceState());
-        outState.putInt("ls", 1);
-    }
-
     private void setupRecipesList(@Nullable Bundle savedInstanceState) {
 
         boolean isSmallestWidth = getResources().getBoolean(R.bool.isSmallestWidth);
@@ -85,10 +78,6 @@ public class RecipesFragment extends Fragment implements LoaderManager.LoaderCal
             recipesList.setLayoutManager(new GridLayoutManager(getContext(), 4));
         } else {
             recipesList.setLayoutManager(new LinearLayoutManager(getContext()));
-        }
-
-        if (savedInstanceState != null && savedInstanceState.containsKey("ls")) {
-            recipesList.getLayoutManager().onRestoreInstanceState(savedInstanceState.getParcelable("ls"));
         }
 
         recipesList.setHasFixedSize(true);
@@ -143,9 +132,10 @@ public class RecipesFragment extends Fragment implements LoaderManager.LoaderCal
     }
 
     @Override
-    public void onItemClick(int recipeId) {
+    public void onItemClick(int recipeId, String recipeTitle) {
         Intent intent = new Intent(getContext(), DetailsActivity.class);
         intent.putExtra(DetailsActivity.RECIPE_ID_EXTRA, recipeId);
+        intent.putExtra(DetailsActivity.RECIPE_TITLE_EXTRA, recipeTitle);
         startActivity(intent);
     }
 }

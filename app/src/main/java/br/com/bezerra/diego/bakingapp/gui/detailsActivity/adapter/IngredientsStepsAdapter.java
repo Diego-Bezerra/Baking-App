@@ -19,10 +19,19 @@ public class IngredientsStepsAdapter extends RecyclerView.Adapter<RecyclerView.V
     public static final int STEP_VIEW_TYPE = 1;
 
     private List<BaseModelAdapter> mData;
+    private IngredientCardItemClickListerner ingredientCardItemClickListerner;
+
+    public interface IngredientCardItemClickListerner {
+        void onIngredientCardItemClick();
+    }
 
     public void swipeData(List<BaseModelAdapter> data) {
         mData = data;
         this.notifyDataSetChanged();
+    }
+
+    public void setIngredientCardItemClickListerner(IngredientCardItemClickListerner ingredientCardItemClickListerner) {
+        this.ingredientCardItemClickListerner = ingredientCardItemClickListerner;
     }
 
     @NonNull
@@ -46,8 +55,17 @@ public class IngredientsStepsAdapter extends RecyclerView.Adapter<RecyclerView.V
         int typeView = holder.getItemViewType();
         switch (typeView) {
             case INGREDIENT_VIEW_TYPE:
-                IngredientModelAdapter ingredient = (IngredientModelAdapter) mData.get(position);
-                ((IngredientViewHolder) holder).bind(ingredient);
+                IngredientViewHolder ingredientViewHolder = (IngredientViewHolder) holder;
+                final IngredientModelAdapter ingredient = (IngredientModelAdapter) mData.get(position);
+                ingredientViewHolder.itemView.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        if (ingredientCardItemClickListerner != null) {
+                            ingredientCardItemClickListerner.onIngredientCardItemClick();
+                        }
+                    }
+                });
+                ingredientViewHolder.bind(ingredient);
                 break;
             case STEP_VIEW_TYPE:
                 StepModelAdapter step = (StepModelAdapter) mData.get(position);
@@ -70,8 +88,6 @@ public class IngredientsStepsAdapter extends RecyclerView.Adapter<RecyclerView.V
 
     static class IngredientViewHolder extends RecyclerView.ViewHolder {
 
-        @BindView(R.id.title)
-        TextView title;
         @BindView(R.id.description)
         TextView description;
 
@@ -87,8 +103,6 @@ public class IngredientsStepsAdapter extends RecyclerView.Adapter<RecyclerView.V
 
     static class StepViewHolder extends RecyclerView.ViewHolder {
 
-        @BindView(R.id.title)
-        TextView title;
         @BindView(R.id.description)
         TextView description;
 
@@ -98,8 +112,6 @@ public class IngredientsStepsAdapter extends RecyclerView.Adapter<RecyclerView.V
         }
 
         void bind(StepModelAdapter model) {
-//            String title = String.format(itemView.getContext().getString(R.string.step_title_format), getAdapterPosition() + 1);
-//            this.title.setText(title);
             description.setText(model.getDescription());
         }
     }

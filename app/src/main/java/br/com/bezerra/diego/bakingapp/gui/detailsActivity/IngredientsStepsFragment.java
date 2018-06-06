@@ -1,5 +1,6 @@
 package br.com.bezerra.diego.bakingapp.gui.detailsActivity;
 
+import android.content.Context;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -30,11 +31,13 @@ import br.com.bezerra.diego.bakingapp.gui.detailsActivity.adapter.StepModelAdapt
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
-public class IngredientsStepsFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
+public class IngredientsStepsFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>
+        , IngredientsStepsAdapter.IngredientCardItemClickListerner {
 
     private static final int LOADER_INGREDIENTS_ID = 2;
     private static final int LOADER_STEPS_ID = 3;
     public static final String RECIPE_ID_EXTRA = "recipe_id_extra";
+    public static final String FRAGMENT_LISTENER_EXTRA = "fragment_listener_extra";
     public static final String FRAGMENT_TAG = "IngredientsStepsFragment";
 
     @BindView(R.id.ingredientsStepsList)
@@ -45,16 +48,32 @@ public class IngredientsStepsFragment extends Fragment implements LoaderManager.
     TextView noResults;
 
     private IngredientsStepsAdapter ingredientsStepsAdapter;
-    private int recipeId;
+    private long recipeId;
     private List<BaseModelAdapter> adapterData = new ArrayList<>();
+    private DetailsActivityFragmentListener detailsActivityFragmentListener;
 
-    public static IngredientsStepsFragment newInstance(int recipeId) {
+    public static IngredientsStepsFragment newInstance(long recipeId, DetailsActivityFragmentListener detailsActivityFragmentListener) {
         IngredientsStepsFragment fragment = new IngredientsStepsFragment();
         Bundle bundle = new Bundle();
-        bundle.putInt(RECIPE_ID_EXTRA, recipeId);
+        bundle.putLong(RECIPE_ID_EXTRA, recipeId);
+        bundle.putSerializable(FRAGMENT_LISTENER_EXTRA, detailsActivityFragmentListener);
         fragment.setArguments(bundle);
 
         return fragment;
+    }
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        Bundle bundle = getArguments();
+        if  (bundle != null) {
+            if (bundle.containsKey(RECIPE_ID_EXTRA)) {
+                recipeId = bundle.getInt(RECIPE_ID_EXTRA);
+            }
+            if (bundle.containsKey(FRAGMENT_LISTENER_EXTRA)) {
+                detailsActivityFragmentListener = (DetailsActivityFragmentListener) bundle.getSerializable(FRAGMENT_LISTENER_EXTRA);
+            }
+        }
     }
 
     @Nullable
@@ -69,12 +88,8 @@ public class IngredientsStepsFragment extends Fragment implements LoaderManager.
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
-        setupIngredientsStepsList();
-
-        Bundle bundle = getArguments();
-        if (getActivity() != null && bundle != null && bundle.containsKey(RECIPE_ID_EXTRA)) {
-            recipeId = bundle.getInt(RECIPE_ID_EXTRA);
+        if (getActivity() != null) {
+            setupIngredientsStepsList();
             getActivity().getSupportLoaderManager().initLoader(LOADER_INGREDIENTS_ID, null, this);
         }
     }
@@ -83,6 +98,7 @@ public class IngredientsStepsFragment extends Fragment implements LoaderManager.
         ingredientsStepsList.setLayoutManager(new LinearLayoutManager(getContext()));
         ingredientsStepsList.setHasFixedSize(true);
         ingredientsStepsAdapter = new IngredientsStepsAdapter();
+        ingredientsStepsAdapter.setIngredientCardItemClickListerner(this);
         ingredientsStepsList.setAdapter(ingredientsStepsAdapter);
     }
 
@@ -135,11 +151,9 @@ public class IngredientsStepsFragment extends Fragment implements LoaderManager.
         IngredientModelAdapter ingredientModelAdapter = new IngredientModelAdapter();
         ingredientModelAdapter.setId(data.getInt(data.getColumnIndex(IngredientContract._ID)));
         ingredientModelAdapter.setViewType(IngredientsStepsAdapter.INGREDIENT_VIEW_TYPE);
-        ingredientModelAdapter.setMeasure(data.getString(data.getColumnIndex(IngredientContract.MEASURE)));
-        ingredientModelAdapter.setQuantity(data.getDouble(data.getColumnIndex(IngredientContract.QUANTITY)));
+        ingredientModelAdapter.setRecipeId(data.getLong(data.getColumnIndex(IngredientContract.RECIPE)));
 
-        StringBuilder ingredientStrBuilder = new StringBuilder("1. ");
-        ingredientStrBuilder.append(data.getString(data.getColumnIndex(IngredientContract.INGREDIENT)));
+        StringBuilder ingredientStrBuilder = new StringBuilder(data.getString(data.getColumnIndex(IngredientContract.INGREDIENT)));
         int i = 0;
         while (data.moveToNext()) {
             ingredientStrBuilder.append(i + 1);
@@ -168,5 +182,10 @@ public class IngredientsStepsFragment extends Fragment implements LoaderManager.
             stepModelAdapter.setVideoURL(data.getString(data.getColumnIndex(StepContract.VIDEO_URL)));
             adapterData.add(stepModelAdapter);
         }
+    }
+
+    @Override
+    public void onIngredientCardItemClick() {
+        detailsActivityFragmentListener.onIngredientsCardClicked();
     }
 }

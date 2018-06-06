@@ -2,24 +2,15 @@ package br.com.bezerra.diego.bakingapp.gui.detailsActivity.adapter;
 
 public class IngredientModelAdapter extends BaseModelAdapter {
 
-    private double quantity;
-    private String measure;
+    private long recipeId;
     private String ingredient;
 
-    public double getQuantity() {
-        return quantity;
+    public long getRecipeId() {
+        return recipeId;
     }
 
-    public void setQuantity(double quantity) {
-        this.quantity = quantity;
-    }
-
-    public String getMeasure() {
-        return measure;
-    }
-
-    public void setMeasure(String measure) {
-        this.measure = measure;
+    public void setRecipeId(long recipeId) {
+        this.recipeId = recipeId;
     }
 
     public String getIngredient() {
