@@ -8,6 +8,8 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -36,8 +38,6 @@ public class IngredientsStepsFragment extends Fragment implements LoaderManager.
 
     private static final int LOADER_INGREDIENTS_ID = 2;
     private static final int LOADER_STEPS_ID = 3;
-    public static final String RECIPE_ID_EXTRA = "recipe_id_extra";
-    public static final String FRAGMENT_LISTENER_EXTRA = "fragment_listener_extra";
     public static final String FRAGMENT_TAG = "IngredientsStepsFragment";
 
     @BindView(R.id.ingredientsStepsList)
@@ -55,8 +55,8 @@ public class IngredientsStepsFragment extends Fragment implements LoaderManager.
     public static IngredientsStepsFragment newInstance(long recipeId, DetailsActivityFragmentListener detailsActivityFragmentListener) {
         IngredientsStepsFragment fragment = new IngredientsStepsFragment();
         Bundle bundle = new Bundle();
-        bundle.putLong(RECIPE_ID_EXTRA, recipeId);
-        bundle.putSerializable(FRAGMENT_LISTENER_EXTRA, detailsActivityFragmentListener);
+        bundle.putLong(DetailsActivity.RECIPE_ID_EXTRA, recipeId);
+        bundle.putSerializable(DetailsActivity.FRAGMENT_LISTENER_EXTRA, detailsActivityFragmentListener);
         fragment.setArguments(bundle);
 
         return fragment;
@@ -65,13 +65,14 @@ public class IngredientsStepsFragment extends Fragment implements LoaderManager.
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
+
         Bundle bundle = getArguments();
-        if  (bundle != null) {
-            if (bundle.containsKey(RECIPE_ID_EXTRA)) {
-                recipeId = bundle.getInt(RECIPE_ID_EXTRA);
+        if (bundle != null) {
+            if (bundle.containsKey(DetailsActivity.RECIPE_ID_EXTRA)) {
+                recipeId = bundle.getLong(DetailsActivity.RECIPE_ID_EXTRA);
             }
-            if (bundle.containsKey(FRAGMENT_LISTENER_EXTRA)) {
-                detailsActivityFragmentListener = (DetailsActivityFragmentListener) bundle.getSerializable(FRAGMENT_LISTENER_EXTRA);
+            if (bundle.containsKey(DetailsActivity.FRAGMENT_LISTENER_EXTRA)) {
+                detailsActivityFragmentListener = (DetailsActivityFragmentListener) bundle.getSerializable(DetailsActivity.FRAGMENT_LISTENER_EXTRA);
             }
         }
     }
@@ -81,6 +82,17 @@ public class IngredientsStepsFragment extends Fragment implements LoaderManager.
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_ingredients_steps, container, false);
         ButterKnife.bind(this, view);
+
+        if (getActivity() != null) {
+            AppCompatActivity activity = ((AppCompatActivity) getActivity());
+            ActionBar actionBar = activity.getSupportActionBar();
+            if (actionBar != null) {
+                actionBar.setHomeButtonEnabled(true);
+                if (detailsActivityFragmentListener != null) {
+                    detailsActivityFragmentListener.setDefaultTitle();
+                }
+            }
+        }
 
         return view;
     }
@@ -146,26 +158,28 @@ public class IngredientsStepsFragment extends Fragment implements LoaderManager.
 
     private void addIngredients(Cursor data) {
 
-        data.moveToFirst();
+        if (data.moveToFirst()) {
 
-        IngredientModelAdapter ingredientModelAdapter = new IngredientModelAdapter();
-        ingredientModelAdapter.setId(data.getInt(data.getColumnIndex(IngredientContract._ID)));
-        ingredientModelAdapter.setViewType(IngredientsStepsAdapter.INGREDIENT_VIEW_TYPE);
-        ingredientModelAdapter.setRecipeId(data.getLong(data.getColumnIndex(IngredientContract.RECIPE)));
+            IngredientModelAdapter ingredientModelAdapter = new IngredientModelAdapter();
+            ingredientModelAdapter.setId(data.getLong(data.getColumnIndex(IngredientContract._ID)));
+            ingredientModelAdapter.setViewType(IngredientsStepsAdapter.INGREDIENT_VIEW_TYPE);
+            ingredientModelAdapter.setRecipeId(data.getLong(data.getColumnIndex(IngredientContract.RECIPE)));
 
-        StringBuilder ingredientStrBuilder = new StringBuilder(data.getString(data.getColumnIndex(IngredientContract.INGREDIENT)));
-        int i = 0;
-        while (data.moveToNext()) {
-            ingredientStrBuilder.append(i + 1);
-            ingredientStrBuilder.append(". ");
+            final String initStr = "- ";
+            StringBuilder ingredientStrBuilder = new StringBuilder(initStr);
             ingredientStrBuilder.append(data.getString(data.getColumnIndex(IngredientContract.INGREDIENT)));
-            if (i != data.getCount() - 1) {
-                ingredientStrBuilder.append("\n");
+            int i = 0;
+            while (data.moveToNext()) {
+                ingredientStrBuilder.append(initStr);
+                ingredientStrBuilder.append(data.getString(data.getColumnIndex(IngredientContract.INGREDIENT)));
+                if (i != data.getCount() - 1) {
+                    ingredientStrBuilder.append("\n");
+                }
+                i++;
             }
-            i++;
+            ingredientModelAdapter.setIngredient(ingredientStrBuilder.toString());
+            adapterData.add(ingredientModelAdapter);
         }
-        ingredientModelAdapter.setIngredient(ingredientStrBuilder.toString());
-        adapterData.add(ingredientModelAdapter);
     }
 
     private void addSteps(Cursor data) {
@@ -186,6 +200,12 @@ public class IngredientsStepsFragment extends Fragment implements LoaderManager.
 
     @Override
     public void onIngredientCardItemClick() {
-        detailsActivityFragmentListener.onIngredientsCardClicked();
+        if (getActivity() != null) {
+            IngredientsFragment fragment = IngredientsFragment.newInstance(recipeId, null);
+            getActivity().getSupportFragmentManager().beginTransaction()
+                    .addToBackStack(null)
+                    .replace(R.id.fragmentContainer, fragment, IngredientsFragment.FRAGMENT_TAG)
+                    .commit();
+        }
     }
 }

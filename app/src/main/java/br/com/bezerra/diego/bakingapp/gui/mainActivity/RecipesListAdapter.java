@@ -22,7 +22,7 @@ public class RecipesListAdapter extends RecyclerView.Adapter<RecipesListAdapter.
     private RecipeAdapterItemClickListerner recipeAdapterItemClickListerner;
 
     public interface RecipeAdapterItemClickListerner {
-        void onItemClick(int recipeId, String recipeTitle);
+        void onItemClick(long recipeId, String recipeTitle);
     }
 
     public void setRecipeAdapterItemClickListerner(RecipeAdapterItemClickListerner recipeAdapterItemClickListerner) {
@@ -56,7 +56,7 @@ public class RecipesListAdapter extends RecyclerView.Adapter<RecipesListAdapter.
             public void onClick(View v) {
                 if (recipeAdapterItemClickListerner != null) {
                     mCursor.moveToPosition(position);
-                    int recipeId = mCursor.getInt(mCursor.getColumnIndex(RecipeContract._ID));
+                    long recipeId = mCursor.getLong(mCursor.getColumnIndex(RecipeContract._ID));
                     String name = mCursor.getString(mCursor.getColumnIndex(RecipeContract.NAME));
                     recipeAdapterItemClickListerner.onItemClick(recipeId, name);
                 }

@@ -2,14 +2,14 @@ package br.com.bezerra.diego.bakingapp.gui.detailsActivity.adapter;
 
 public class BaseModelAdapter {
 
-    private int id;
+    private long id;
     private int viewType;
 
-    public int getId() {
+    public long getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(long id) {
         this.id = id;
     }
 

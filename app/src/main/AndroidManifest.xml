@@ -24,12 +24,14 @@
         <activity
             android:name=".gui.detailsActivity.DetailsActivity"
             android:label="@string/activity_detail_label"
-            android:launchMode="singleTop" />
+            android:launchMode="singleTop"
+            android:theme="@style/AppTheme" />
 
         <provider
             android:name=".data.database.generated.BakingAppProvider"
             android:authorities="br.com.bezerra.diego.bakingapp.provider"
             android:exported="false" />
+
     </application>
 
 </manifest>

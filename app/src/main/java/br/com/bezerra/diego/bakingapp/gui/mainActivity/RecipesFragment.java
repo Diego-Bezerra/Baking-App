@@ -132,7 +132,7 @@ public class RecipesFragment extends Fragment implements LoaderManager.LoaderCal
     }
 
     @Override
-    public void onItemClick(int recipeId, String recipeTitle) {
+    public void onItemClick(long recipeId, String recipeTitle) {
         Intent intent = new Intent(getContext(), DetailsActivity.class);
         intent.putExtra(DetailsActivity.RECIPE_ID_EXTRA, recipeId);
         intent.putExtra(DetailsActivity.RECIPE_TITLE_EXTRA, recipeTitle);

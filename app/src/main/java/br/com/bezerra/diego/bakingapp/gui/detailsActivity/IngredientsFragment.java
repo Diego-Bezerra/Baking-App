@@ -13,6 +13,8 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 
 import br.com.bezerra.diego.bakingapp.R;
 import br.com.bezerra.diego.bakingapp.data.database.util.IngredientsProviderUtil;
@@ -23,24 +25,25 @@ import butterknife.ButterKnife;
 
 public class IngredientsFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>, IngredientsStepsAdapter.IngredientCardItemClickListerner {
 
-    public static final String RECIPE_ID_EXTRA = "recipeIdExtra";
     public static final String FRAGMENT_TAG = "IngredientsStepsFragment";
     public static final int LOADER_ID = 1;
 
     @BindView(R.id.ingredientsList)
     RecyclerView ingredientsList;
     @BindView(R.id.progress)
-    RecyclerView progress;
+    ProgressBar progress;
     @BindView(R.id.noResults)
-    RecyclerView noResults;
+    TextView noResults;
 
     private long recipeId;
     private IngredientsAdapter adapter;
+    private DetailsActivityFragmentListener detailsActivityFragmentListener;
 
-    public static IngredientsFragment newInstance(long recipeId) {
+    public static IngredientsFragment newInstance(long recipeId, DetailsActivityFragmentListener detailsActivityFragmentListener) {
         IngredientsFragment fragment = new IngredientsFragment();
         Bundle bundle = new Bundle();
-        bundle.putLong(RECIPE_ID_EXTRA, recipeId);
+        bundle.putLong(DetailsActivity.RECIPE_ID_EXTRA, recipeId);
+        bundle.putSerializable(DetailsActivity.FRAGMENT_LISTENER_EXTRA, detailsActivityFragmentListener);
         fragment.setArguments(bundle);
 
         return fragment;
@@ -49,9 +52,14 @@ public class IngredientsFragment extends Fragment implements LoaderManager.Loade
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
+
         Bundle bundle = getArguments();
-        if (bundle != null && bundle.containsKey(RECIPE_ID_EXTRA)) {
-            recipeId = bundle.getInt(RECIPE_ID_EXTRA);
+        if (bundle != null && bundle.containsKey(DetailsActivity.RECIPE_ID_EXTRA)) {
+            recipeId = bundle.getLong(DetailsActivity.RECIPE_ID_EXTRA);
+
+            if (bundle.containsKey(DetailsActivity.FRAGMENT_LISTENER_EXTRA)) {
+                detailsActivityFragmentListener = (DetailsActivityFragmentListener) bundle.getSerializable(DetailsActivity.FRAGMENT_LISTENER_EXTRA);
+            }
         }
     }
 
@@ -60,6 +68,11 @@ public class IngredientsFragment extends Fragment implements LoaderManager.Loade
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_ingredients, container, false);
         ButterKnife.bind(this, view);
+
+        if (detailsActivityFragmentListener != null) {
+            detailsActivityFragmentListener.setDefaultTitle();
+        }
+
         return view;
     }
 
