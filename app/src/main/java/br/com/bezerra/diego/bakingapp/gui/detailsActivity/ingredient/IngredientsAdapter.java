@@ -1,4 +1,4 @@
-package br.com.bezerra.diego.bakingapp.gui.detailsActivity.adapter;
+package br.com.bezerra.diego.bakingapp.gui.detailsActivity.ingredient;
 
 import android.content.Context;
 import android.database.Cursor;

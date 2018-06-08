@@ -1,4 +1,4 @@
-package br.com.bezerra.diego.bakingapp.gui.detailsActivity;
+package br.com.bezerra.diego.bakingapp.gui.detailsActivity.ingredient;
 
 import android.content.Context;
 import android.database.Cursor;
@@ -8,6 +8,7 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -18,15 +19,15 @@ import android.widget.TextView;
 
 import br.com.bezerra.diego.bakingapp.R;
 import br.com.bezerra.diego.bakingapp.data.database.util.IngredientsProviderUtil;
-import br.com.bezerra.diego.bakingapp.gui.detailsActivity.adapter.IngredientsAdapter;
-import br.com.bezerra.diego.bakingapp.gui.detailsActivity.adapter.IngredientsStepsAdapter;
+import br.com.bezerra.diego.bakingapp.gui.detailsActivity.DetailsActivity;
+import br.com.bezerra.diego.bakingapp.gui.detailsActivity.DetailsActivityFragmentListener;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
-public class IngredientsFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>, IngredientsStepsAdapter.IngredientCardItemClickListerner {
+public class IngredientsFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
 
     public static final String FRAGMENT_TAG = "IngredientsStepsFragment";
-    public static final int LOADER_ID = 1;
+    public final int LOADER_ID = 2;
 
     @BindView(R.id.ingredientsList)
     RecyclerView ingredientsList;
@@ -39,10 +40,11 @@ public class IngredientsFragment extends Fragment implements LoaderManager.Loade
     private IngredientsAdapter adapter;
     private DetailsActivityFragmentListener detailsActivityFragmentListener;
 
-    public static IngredientsFragment newInstance(long recipeId, DetailsActivityFragmentListener detailsActivityFragmentListener) {
+    public static IngredientsFragment newInstance(long recipeId, String recipeTitle, DetailsActivityFragmentListener detailsActivityFragmentListener) {
         IngredientsFragment fragment = new IngredientsFragment();
         Bundle bundle = new Bundle();
         bundle.putLong(DetailsActivity.RECIPE_ID_EXTRA, recipeId);
+        bundle.putString(DetailsActivity.RECIPE_TITLE_EXTRA, recipeTitle);
         bundle.putSerializable(DetailsActivity.FRAGMENT_LISTENER_EXTRA, detailsActivityFragmentListener);
         fragment.setArguments(bundle);
 
@@ -60,6 +62,14 @@ public class IngredientsFragment extends Fragment implements LoaderManager.Loade
             if (bundle.containsKey(DetailsActivity.FRAGMENT_LISTENER_EXTRA)) {
                 detailsActivityFragmentListener = (DetailsActivityFragmentListener) bundle.getSerializable(DetailsActivity.FRAGMENT_LISTENER_EXTRA);
             }
+            if (!getResources().getBoolean(R.bool.isSmallestWidth) && bundle.containsKey(DetailsActivity.RECIPE_TITLE_EXTRA)) {
+                AppCompatActivity activity = (AppCompatActivity)getActivity();
+                if (activity != null && activity.getSupportActionBar() != null) {
+                    String recipeTitle = bundle.getString(DetailsActivity.RECIPE_TITLE_EXTRA);
+                    String title = String.format(getString(R.string.recipe_ingredient_title_format), recipeTitle);
+                    activity.getSupportActionBar().setTitle(title);
+                }
+            }
         }
     }
 
@@ -68,10 +78,6 @@ public class IngredientsFragment extends Fragment implements LoaderManager.Loade
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_ingredients, container, false);
         ButterKnife.bind(this, view);
-
-        if (detailsActivityFragmentListener != null) {
-            detailsActivityFragmentListener.setDefaultTitle();
-        }
 
         return view;
     }
@@ -112,11 +118,6 @@ public class IngredientsFragment extends Fragment implements LoaderManager.Loade
 
     @Override
     public void onLoaderReset(@NonNull Loader<Cursor> loader) {
-
-    }
-
-    @Override
-    public void onIngredientCardItemClick() {
 
     }
 }

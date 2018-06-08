@@ -30,7 +30,7 @@ import butterknife.ButterKnife;
 public class RecipesFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>
         , BakingAppServiceUtil.NoConnectivityReceiverListener, ConnectivityReceiver.ConnectivityReceiverListener, RecipesListAdapter.RecipeAdapterItemClickListerner {
 
-    private static final int LOADER_ID = 1;
+    private final int LOADER_ID = 3;
 
     @BindView(R.id.recipesList)
     RecyclerView recipesList;
@@ -75,7 +75,7 @@ public class RecipesFragment extends Fragment implements LoaderManager.LoaderCal
         boolean isSmallestWidth = getResources().getBoolean(R.bool.isSmallestWidth);
 
         if (isSmallestWidth) {
-            recipesList.setLayoutManager(new GridLayoutManager(getContext(), 4));
+            recipesList.setLayoutManager(new GridLayoutManager(getContext(), 3));
         } else {
             recipesList.setLayoutManager(new LinearLayoutManager(getContext()));
         }

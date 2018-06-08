@@ -9,6 +9,7 @@ import net.simonvt.schematic.annotation.TableEndpoint;
 
 import br.com.bezerra.diego.bakingapp.data.database.contract.IngredientContract;
 import br.com.bezerra.diego.bakingapp.data.database.contract.RecipeContract;
+import br.com.bezerra.diego.bakingapp.data.database.contract.StepContract;
 
 @ContentProvider(authority = BakingAppProvider.AUTHORITY, database = BakingAppDatabase.class)
 public class BakingAppProvider {
@@ -46,10 +47,19 @@ public class BakingAppProvider {
                 path = "steps/#",
                 name = "STEPS_ID",
                 type = "vnd.android.cursor.item/steps",
-                whereColumn = IngredientContract.RECIPE,
+                whereColumn = StepContract.RECIPE,
                 pathSegment = 1)
         public static Uri withRecipeId(long id) {
             return Uri.parse("content://" + AUTHORITY + "/steps/" + id);
+        }
+        @InexactContentUri(
+                path = "step/#",
+                name = "STEP_ID",
+                type = "vnd.android.cursor.item/step",
+                whereColumn = StepContract._ID,
+                pathSegment = 1)
+        public static Uri withStepId(long id) {
+            return Uri.parse("content://" + AUTHORITY + "/step/" + id);
         }
     }
 }

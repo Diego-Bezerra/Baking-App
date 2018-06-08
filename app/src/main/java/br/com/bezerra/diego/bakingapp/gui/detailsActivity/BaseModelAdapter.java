@@ -1,4 +1,4 @@
-package br.com.bezerra.diego.bakingapp.gui.detailsActivity.adapter;
+package br.com.bezerra.diego.bakingapp.gui.detailsActivity;
 
 public class BaseModelAdapter {
 

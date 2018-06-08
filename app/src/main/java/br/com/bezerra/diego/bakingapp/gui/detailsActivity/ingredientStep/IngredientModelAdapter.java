@@ -1,4 +1,6 @@
-package br.com.bezerra.diego.bakingapp.gui.detailsActivity.adapter;
+package br.com.bezerra.diego.bakingapp.gui.detailsActivity.ingredientStep;
+
+import br.com.bezerra.diego.bakingapp.gui.detailsActivity.BaseModelAdapter;
 
 public class IngredientModelAdapter extends BaseModelAdapter {
 

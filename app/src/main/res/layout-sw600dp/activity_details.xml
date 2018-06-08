@@ -6,10 +6,10 @@
 
     <fragment
         android:id="@+id/ingredientsStepsFragment"
-        android:name="br.com.bezerra.diego.bakingapp.gui.detailsActivity.IngredientsStepsFragment"
+        android:name="br.com.bezerra.diego.bakingapp.gui.detailsActivity.ingredientStep.IngredientsStepsFragment"
         android:layout_width="0dp"
         android:layout_height="match_parent"
-        android:layout_weight="0.5" />
+        android:layout_weight="0.8" />
 
     <View
         android:layout_width="1dp"

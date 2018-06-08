@@ -7,12 +7,14 @@ import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
 
 import br.com.bezerra.diego.bakingapp.R;
+import br.com.bezerra.diego.bakingapp.gui.detailsActivity.ingredientStep.IngredientsStepsFragment;
 
 public class DetailsActivity extends AppCompatActivity implements DetailsActivityFragmentListener, FragmentManager.OnBackStackChangedListener {
 
     public static final String RECIPE_ID_EXTRA = "recipe_id_extra";
     public static final String RECIPE_TITLE_EXTRA = "recipe_title_extra";
     public static final String FRAGMENT_LISTENER_EXTRA = "fragment_listener_extra";
+    public static final String STEP_ID_EXTRA = "step_id_extra";
 
     private String recipeTitle;
 
@@ -28,12 +30,11 @@ public class DetailsActivity extends AppCompatActivity implements DetailsActivit
 
             recipeTitle = bundle.getString(RECIPE_TITLE_EXTRA, "");
             long recipeId = bundle.getLong(RECIPE_ID_EXTRA);
-            Fragment fragment;
 
             if (!getResources().getBoolean(R.bool.isSmallestWidth)) {
-
+                Fragment fragment;
                 if (savedInstanceState == null) {
-                    fragment = IngredientsStepsFragment.newInstance(recipeId, this);
+                    fragment = IngredientsStepsFragment.newInstance(recipeId, recipeTitle, this);
                 } else {
                     fragment = getSupportFragmentManager().findFragmentByTag(IngredientsStepsFragment.FRAGMENT_TAG);
                 }
@@ -42,7 +43,8 @@ public class DetailsActivity extends AppCompatActivity implements DetailsActivit
                         .replace(R.id.fragmentContainer, fragment, IngredientsStepsFragment.FRAGMENT_TAG)
                         .commit();
             } else {
-
+                IngredientsStepsFragment ingredientsStepsFragment = (IngredientsStepsFragment) getSupportFragmentManager().findFragmentById(R.id.ingredientsStepsFragment);
+                ingredientsStepsFragment.loadRecipe(recipeId, recipeTitle);
             }
         }
     }
