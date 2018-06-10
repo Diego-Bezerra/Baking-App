@@ -47,11 +47,6 @@ public class RecipesFragment extends Fragment implements LoaderManager.LoaderCal
         super.onCreate(savedInstanceState);
     }
 
-    @Override
-    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-    }
-
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -65,9 +60,50 @@ public class RecipesFragment extends Fragment implements LoaderManager.LoaderCal
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         setupRecipesList(savedInstanceState);
-        if (getActivity() != null) {
-            getActivity().getSupportLoaderManager().initLoader(LOADER_ID, null, this);
+        if (getActivity() != null && getLoaderManager().getLoader(LOADER_ID) == null) {
+            getLoaderManager().initLoader(LOADER_ID, null, this);
         }
+    }
+
+    @Override
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
     }
 
     private void setupRecipesList(@Nullable Bundle savedInstanceState) {

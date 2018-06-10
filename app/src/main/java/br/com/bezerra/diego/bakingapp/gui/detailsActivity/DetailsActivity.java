@@ -14,6 +14,7 @@ public class DetailsActivity extends AppCompatActivity implements DetailsActivit
     public static final String RECIPE_ID_EXTRA = "recipe_id_extra";
     public static final String RECIPE_TITLE_EXTRA = "recipe_title_extra";
     public static final String FRAGMENT_LISTENER_EXTRA = "fragment_listener_extra";
+    public static final String STEP_POSITION_EXTRA = "step_position_extra";
     public static final String STEP_ID_EXTRA = "step_id_extra";
 
     private String recipeTitle;

@@ -36,7 +36,7 @@ public class IngredientsStepsAdapter extends RecyclerView.Adapter<RecyclerView.V
                     break;
                 case STEP_VIEW_TYPE:
                     StepModelAdapter stepModelAdapter = (StepModelAdapter) mData.get(position);
-                    cardItemClickListerner.onStepCardItemClick(stepModelAdapter.getId());
+                    cardItemClickListerner.onStepCardItemClick(stepModelAdapter.getId(), position);
                     break;
             }
         }
@@ -45,7 +45,7 @@ public class IngredientsStepsAdapter extends RecyclerView.Adapter<RecyclerView.V
     public interface CardItemClickListerner {
         void onIngredientCardItemClick(long recipeId);
 
-        void onStepCardItemClick(long stepId);
+        void onStepCardItemClick(long stepId, int position);
     }
 
     public void swipeData(List<BaseModelAdapter> data) {
@@ -120,6 +120,8 @@ public class IngredientsStepsAdapter extends RecyclerView.Adapter<RecyclerView.V
 
     static class StepViewHolder extends RecyclerView.ViewHolder {
 
+        @BindView(R.id.title)
+        TextView title;
         @BindView(R.id.description)
         TextView description;
 
@@ -129,6 +131,9 @@ public class IngredientsStepsAdapter extends RecyclerView.Adapter<RecyclerView.V
         }
 
         void bind(StepModelAdapter model) {
+            String stepTitle = String.format(itemView.getContext().getText(R.string.step_title_format).toString()
+                    , getLayoutPosition());
+            title.setText(stepTitle);
             description.setText(model.getShortDescription());
         }
     }

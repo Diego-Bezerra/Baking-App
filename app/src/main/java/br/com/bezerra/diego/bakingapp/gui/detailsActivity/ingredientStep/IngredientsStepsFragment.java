@@ -27,9 +27,9 @@ import br.com.bezerra.diego.bakingapp.data.database.contract.IngredientContract;
 import br.com.bezerra.diego.bakingapp.data.database.contract.StepContract;
 import br.com.bezerra.diego.bakingapp.data.database.util.IngredientsProviderUtil;
 import br.com.bezerra.diego.bakingapp.data.database.util.StepsProviderUtil;
+import br.com.bezerra.diego.bakingapp.gui.detailsActivity.BaseModelAdapter;
 import br.com.bezerra.diego.bakingapp.gui.detailsActivity.DetailsActivity;
 import br.com.bezerra.diego.bakingapp.gui.detailsActivity.DetailsActivityFragmentListener;
-import br.com.bezerra.diego.bakingapp.gui.detailsActivity.BaseModelAdapter;
 import br.com.bezerra.diego.bakingapp.gui.detailsActivity.ingredient.IngredientsFragment;
 import br.com.bezerra.diego.bakingapp.gui.detailsActivity.step.StepFragment;
 import butterknife.BindView;
@@ -67,20 +67,30 @@ public class IngredientsStepsFragment extends Fragment implements LoaderManager.
     }
 
     public void loadRecipe(long recipeId, String recipeTitle) {
-        this.recipeId = recipeId;
-        this.recipeTitle = recipeTitle;
-        if (getActivity() != null) {
 
-            AppCompatActivity activity = ((AppCompatActivity) getActivity());
-            ActionBar actionBar = activity.getSupportActionBar();
-            if (actionBar != null) {
-                actionBar.setHomeButtonEnabled(true);
-                actionBar.setTitle(recipeTitle);
-            }
-
-            setupIngredientsStepsList();
-            getActivity().getSupportLoaderManager().initLoader(LOADER_INGREDIENTS_ID, null, this);
+        AppCompatActivity activity = ((AppCompatActivity) getActivity());
+        ActionBar actionBar = activity.getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.setHomeButtonEnabled(true);
+            actionBar.setTitle(recipeTitle);
         }
+
+        if (getActivity() != null && getLoaderManager().getLoader(LOADER_INGREDIENTS_ID) == null) {
+
+            this.recipeId = recipeId;
+            this.recipeTitle = recipeTitle;
+
+            getLoaderManager().initLoader(LOADER_INGREDIENTS_ID, null, this);
+
+        } else {
+            adapterData.clear();
+            ingredientsStepsAdapter.swipeData(adapterData);
+        }
+    }
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
     }
 
     @Override
@@ -113,9 +123,51 @@ public class IngredientsStepsFragment extends Fragment implements LoaderManager.
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        setupIngredientsStepsList();
+
         if (!getResources().getBoolean(R.bool.isSmallestWidth)) {
             loadRecipe(recipeId, recipeTitle);
         }
+    }
+
+    @Override
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
     }
 
     private void setupIngredientsStepsList() {
@@ -145,18 +197,23 @@ public class IngredientsStepsFragment extends Fragment implements LoaderManager.
         switch (loader.getId()) {
             case LOADER_INGREDIENTS_ID:
                 addIngredients(data);
-                if (getActivity() != null) {
-                    getActivity().getSupportLoaderManager().initLoader(LOADER_STEPS_ID, null, this);
+                if (getLoaderManager().getLoader(LOADER_STEPS_ID) == null) {
+                    getLoaderManager().initLoader(LOADER_STEPS_ID, null, this);
                 }
                 break;
             case LOADER_STEPS_ID:
                 addSteps(data);
                 ingredientsStepsAdapter.swipeData(adapterData);
+                ingredientsStepsList.setAdapter(ingredientsStepsAdapter);
                 progress.setVisibility(View.GONE);
 
                 if (adapterData.size() == 0) {
                     noResults.setVisibility(View.VISIBLE);
                     ingredientsStepsList.setVisibility(View.GONE);
+                }
+                if (getResources().getBoolean(R.bool.isSmallestWidth)) {
+                    IngredientsFragment fragment = IngredientsFragment.newInstance(recipeId, recipeTitle, null);
+                    loadFragment(fragment);
                 }
 
                 break;
@@ -210,29 +267,26 @@ public class IngredientsStepsFragment extends Fragment implements LoaderManager.
         }
     }
 
-    @Override
-    public void onIngredientCardItemClick(long recipeId) {
+    private void loadFragment(Fragment fragment) {
         if (getActivity() != null) {
-            IngredientsFragment fragment = IngredientsFragment.newInstance(recipeId, recipeTitle, null);
 
             FragmentTransaction transaction = getActivity().getSupportFragmentManager().beginTransaction();
             if (!getResources().getBoolean(R.bool.isSmallestWidth)) {
                 transaction.addToBackStack(null);
             }
-            transaction.replace(R.id.fragmentContainer, fragment, IngredientsFragment.FRAGMENT_TAG).commit();
+            transaction.replace(R.id.fragmentContainer, fragment).commit();
         }
     }
 
     @Override
-    public void onStepCardItemClick(long stepId) {
-        if (getActivity() != null) {
-            StepFragment fragment = StepFragment.newInstance(stepId, recipeTitle, detailsActivityFragmentListener);
+    public void onIngredientCardItemClick(long recipeId) {
+        IngredientsFragment fragment = IngredientsFragment.newInstance(recipeId, recipeTitle, null);
+        loadFragment(fragment);
+    }
 
-            FragmentTransaction transaction = getActivity().getSupportFragmentManager().beginTransaction();
-            if (!getResources().getBoolean(R.bool.isSmallestWidth)) {
-                transaction.addToBackStack(null);
-            }
-            transaction.replace(R.id.fragmentContainer, fragment, StepFragment.FRAGMENT_TAG).commit();
-        }
+    @Override
+    public void onStepCardItemClick(long stepId, int position) {
+        StepFragment fragment = StepFragment.newInstance(stepId, position, recipeTitle, detailsActivityFragmentListener);
+        loadFragment(fragment);
     }
 }

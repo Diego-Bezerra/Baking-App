@@ -10,7 +10,7 @@
     <string name="ingredient_quantity_format">quantity: %.2f</string>
     <string name="ingredient_measure_format">measure: %s</string>
     <string name="recipe_ingredient_title_format">%s (ingredients)</string>
-    <string name="recipe_step_title_format">%s (step)</string>
+    <string name="recipe_step_title_format">%s (step %d)</string>
     <string name="title_activity_main2">Main2Activity</string>
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>

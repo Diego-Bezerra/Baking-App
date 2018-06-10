@@ -43,13 +43,15 @@ public class StepFragment extends Fragment implements LoaderManager.LoaderCallba
 
     private long stepId;
     private String recipeTitle;
+    private int stepPosition;
     private DetailsActivityFragmentListener detailsActivityFragmentListener;
 
-    public static StepFragment newInstance(long stepId, String recipeTitle, DetailsActivityFragmentListener detailsActivityFragmentListener) {
+    public static StepFragment newInstance(long stepId, int stepPosition, String recipeTitle, DetailsActivityFragmentListener detailsActivityFragmentListener) {
         StepFragment stepFragment = new StepFragment();
         Bundle bundle = new Bundle();
         bundle.putLong(DetailsActivity.STEP_ID_EXTRA, stepId);
         bundle.putString(DetailsActivity.RECIPE_TITLE_EXTRA, recipeTitle);
+        bundle.putInt(DetailsActivity.STEP_POSITION_EXTRA, stepPosition);
         bundle.putSerializable(DetailsActivity.FRAGMENT_LISTENER_EXTRA, detailsActivityFragmentListener);
         stepFragment.setArguments(bundle);
 
@@ -66,10 +68,13 @@ public class StepFragment extends Fragment implements LoaderManager.LoaderCallba
                 stepId = bundle.getLong(DetailsActivity.STEP_ID_EXTRA);
             }
             if (bundle.containsKey(DetailsActivity.RECIPE_TITLE_EXTRA)) {
-                recipeTitle = bundle.getString(DetailsActivity.STEP_ID_EXTRA);
+                recipeTitle = bundle.getString(DetailsActivity.RECIPE_TITLE_EXTRA);
             }
             if (bundle.containsKey(DetailsActivity.FRAGMENT_LISTENER_EXTRA)) {
                 detailsActivityFragmentListener = (DetailsActivityFragmentListener) bundle.getSerializable(DetailsActivity.FRAGMENT_LISTENER_EXTRA);
+            }
+            if (bundle.containsKey(DetailsActivity.STEP_POSITION_EXTRA)) {
+                stepPosition = bundle.getInt(DetailsActivity.STEP_POSITION_EXTRA);
             }
         }
     }
@@ -89,12 +94,38 @@ public class StepFragment extends Fragment implements LoaderManager.LoaderCallba
         AppCompatActivity activity = (AppCompatActivity) getActivity();
         if (activity != null) {
             if (!getResources().getBoolean(R.bool.isSmallestWidth) && activity.getSupportActionBar() != null) {
-                String title = String.format(getString(R.string.recipe_step_title_format), recipeTitle);
+                String title = String.format(getString(R.string.recipe_step_title_format), recipeTitle, stepPosition);
                 activity.getSupportActionBar().setTitle(title);
             }
-
-            activity.getSupportLoaderManager().initLoader(LOADER_ID, null, this);
+            if (activity.getSupportLoaderManager().getLoader(LOADER_ID) == null) {
+                getLoaderManager().initLoader(LOADER_ID, null, this);
+            }
         }
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
     }
 
     @NonNull

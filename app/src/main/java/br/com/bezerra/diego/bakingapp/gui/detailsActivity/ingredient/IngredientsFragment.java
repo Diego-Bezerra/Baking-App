@@ -73,6 +73,11 @@ public class IngredientsFragment extends Fragment implements LoaderManager.Loade
         }
     }
 
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+    }
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -85,10 +90,15 @@ public class IngredientsFragment extends Fragment implements LoaderManager.Loade
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        if (getActivity() != null) {
-            setupList();
-            getActivity().getSupportLoaderManager().initLoader(LOADER_ID, null, this);
+        setupList();
+        if (getActivity() != null && getLoaderManager().getLoader(LOADER_ID) == null) {
+            getLoaderManager().initLoader(LOADER_ID, null, this);
         }
+    }
+
+    @Override
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
     }
 
     private void setupList() {
