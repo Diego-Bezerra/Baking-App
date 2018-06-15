@@ -1,13 +1,17 @@
 package br.com.bezerra.diego.bakingapp.gui.detailsActivity.step;
 
+import android.app.NotificationManager;
 import android.content.Context;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
+import android.support.v4.media.session.MediaSessionCompat;
+import android.support.v4.media.session.PlaybackStateCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -15,7 +19,23 @@ import android.view.ViewGroup;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.google.android.exoplayer2.DefaultLoadControl;
+import com.google.android.exoplayer2.ExoPlaybackException;
+import com.google.android.exoplayer2.ExoPlayer;
+import com.google.android.exoplayer2.ExoPlayerFactory;
+import com.google.android.exoplayer2.LoadControl;
+import com.google.android.exoplayer2.SimpleExoPlayer;
+import com.google.android.exoplayer2.Timeline;
+import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory;
+import com.google.android.exoplayer2.source.ExtractorMediaSource;
+import com.google.android.exoplayer2.source.MediaSource;
+import com.google.android.exoplayer2.source.TrackGroupArray;
+import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
+import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
+import com.google.android.exoplayer2.trackselection.TrackSelector;
 import com.google.android.exoplayer2.ui.SimpleExoPlayerView;
+import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
+import com.google.android.exoplayer2.util.Util;
 
 import br.com.bezerra.diego.bakingapp.R;
 import br.com.bezerra.diego.bakingapp.data.database.contract.StepContract;
@@ -25,7 +45,7 @@ import br.com.bezerra.diego.bakingapp.gui.detailsActivity.DetailsActivityFragmen
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
-public class StepFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
+public class StepFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>, ExoPlayer.EventListener {
 
     public static final String FRAGMENT_TAG = "StepFragment";
     private final int LOADER_ID = 1;
@@ -33,13 +53,18 @@ public class StepFragment extends Fragment implements LoaderManager.LoaderCallba
     @BindView(R.id.container)
     ViewGroup container;
     @BindView(R.id.playerView)
-    SimpleExoPlayerView playerView;
+    SimpleExoPlayerView mPlayerView;
     @BindView(R.id.stepDescription)
     TextView stepDescription;
     @BindView(R.id.progress)
     ProgressBar progress;
     @BindView(R.id.noResults)
     TextView noResults;
+
+    private SimpleExoPlayer mExoPlayer;
+    private static MediaSessionCompat mMediaSession;
+    private PlaybackStateCompat.Builder mStateBuilder;
+    private NotificationManager mNotificationManager;
 
     private long stepId;
     private String recipeTitle;
@@ -103,6 +128,26 @@ public class StepFragment extends Fragment implements LoaderManager.LoaderCallba
         }
     }
 
+    private void initializePlayer(Uri mediaUri) {
+        if (mExoPlayer == null && getContext() != null) {
+            // Create an instance of the ExoPlayer.
+            TrackSelector trackSelector = new DefaultTrackSelector();
+            LoadControl loadControl = new DefaultLoadControl();
+            mExoPlayer = ExoPlayerFactory.newSimpleInstance(getContext(), trackSelector, loadControl);
+            mPlayerView.setPlayer(mExoPlayer);
+
+            // Set the ExoPlayer.EventListener to this activity.
+            mExoPlayer.addListener(this);
+
+            // Prepare the MediaSource.
+            String userAgent = Util.getUserAgent(getContext(), "BakingApp");
+            MediaSource mediaSource = new ExtractorMediaSource(mediaUri, new DefaultDataSourceFactory(
+                    getContext(), userAgent), new DefaultExtractorsFactory(), null, null);
+            mExoPlayer.prepare(mediaSource);
+            mExoPlayer.setPlayWhenReady(true);
+        }
+    }
+
     @Override
     public void onStart() {
         super.onStart();
@@ -143,6 +188,7 @@ public class StepFragment extends Fragment implements LoaderManager.LoaderCallba
             String videoUrl = data.getString(data.getColumnIndex(StepContract.VIDEO_URL));
 
             this.stepDescription.setText(stepDescription);
+            initializePlayer(Uri.parse(videoUrl));
 
         } else {
             container.setVisibility(View.GONE);
@@ -153,6 +199,36 @@ public class StepFragment extends Fragment implements LoaderManager.LoaderCallba
 
     @Override
     public void onLoaderReset(@NonNull Loader<Cursor> loader) {
+
+    }
+
+    @Override
+    public void onTimelineChanged(Timeline timeline, Object manifest) {
+
+    }
+
+    @Override
+    public void onTracksChanged(TrackGroupArray trackGroups, TrackSelectionArray trackSelections) {
+
+    }
+
+    @Override
+    public void onLoadingChanged(boolean isLoading) {
+
+    }
+
+    @Override
+    public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
+
+    }
+
+    @Override
+    public void onPlayerError(ExoPlaybackException error) {
+
+    }
+
+    @Override
+    public void onPositionDiscontinuity() {
 
     }
 }

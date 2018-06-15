@@ -94,6 +94,7 @@ public class RecipesFragment extends Fragment implements LoaderManager.LoaderCal
     @Override
     public void onDestroyView() {
         super.onDestroyView();
+        getLoaderManager().destroyLoader(LOADER_ID);
     }
 
     @Override

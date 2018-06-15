@@ -81,10 +81,6 @@ public class IngredientsStepsFragment extends Fragment implements LoaderManager.
             this.recipeTitle = recipeTitle;
 
             getLoaderManager().initLoader(LOADER_INGREDIENTS_ID, null, this);
-
-        } else {
-            adapterData.clear();
-            ingredientsStepsAdapter.swipeData(adapterData);
         }
     }
 
@@ -163,6 +159,8 @@ public class IngredientsStepsFragment extends Fragment implements LoaderManager.
     @Override
     public void onDestroy() {
         super.onDestroy();
+        getLoaderManager().destroyLoader(LOADER_INGREDIENTS_ID);
+        getLoaderManager().destroyLoader(LOADER_STEPS_ID);
     }
 
     @Override
@@ -196,6 +194,7 @@ public class IngredientsStepsFragment extends Fragment implements LoaderManager.
     public void onLoadFinished(@NonNull Loader loader, Cursor data) {
         switch (loader.getId()) {
             case LOADER_INGREDIENTS_ID:
+                adapterData.clear();
                 addIngredients(data);
                 if (getLoaderManager().getLoader(LOADER_STEPS_ID) == null) {
                     getLoaderManager().initLoader(LOADER_STEPS_ID, null, this);
