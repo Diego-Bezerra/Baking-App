@@ -3,12 +3,11 @@ package br.com.bezerra.diego.bakingapp.gui.detailsActivity.ingredientStep;
 import android.content.Context;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
-import android.support.v4.app.LoaderManager;
-import android.support.v4.content.Loader;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
@@ -32,15 +31,16 @@ import br.com.bezerra.diego.bakingapp.gui.detailsActivity.DetailsActivity;
 import br.com.bezerra.diego.bakingapp.gui.detailsActivity.DetailsActivityFragmentListener;
 import br.com.bezerra.diego.bakingapp.gui.detailsActivity.ingredient.IngredientsFragment;
 import br.com.bezerra.diego.bakingapp.gui.detailsActivity.step.StepFragment;
+import br.com.bezerra.diego.bakingapp.util.AsyncTaskUtil;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
-public class IngredientsStepsFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>
-        , IngredientsStepsAdapter.CardItemClickListerner {
+public class IngredientsStepsFragment extends Fragment implements IngredientsStepsAdapter.CardItemClickListerner
+        , AsyncTaskUtil.AsyncTaskListener<Long, Void, List<BaseModelAdapter>> {
 
-    private final int LOADER_INGREDIENTS_ID = 4;
-    private final int LOADER_STEPS_ID = 5;
     public static final String FRAGMENT_TAG = "IngredientsStepsFragment";
+    private static String LIST_STATE = "LIST_STATE";
+    private static String DATA_STATE = "DATA_STATE";
 
     @BindView(R.id.ingredientsStepsList)
     RecyclerView ingredientsStepsList;
@@ -52,8 +52,10 @@ public class IngredientsStepsFragment extends Fragment implements LoaderManager.
     private IngredientsStepsAdapter ingredientsStepsAdapter;
     private long recipeId;
     private String recipeTitle;
-    private List<BaseModelAdapter> adapterData = new ArrayList<>();
+    private Parcelable listState;
+    private ArrayList<BaseModelAdapter> adapterData;
     private DetailsActivityFragmentListener detailsActivityFragmentListener;
+    private AsyncTaskUtil<Long, Void, List<BaseModelAdapter>> asyncTaskUtil;
 
     public static IngredientsStepsFragment newInstance(long recipeId, String recipeTitle, DetailsActivityFragmentListener detailsActivityFragmentListener) {
         IngredientsStepsFragment fragment = new IngredientsStepsFragment();
@@ -75,12 +77,14 @@ public class IngredientsStepsFragment extends Fragment implements LoaderManager.
             actionBar.setTitle(recipeTitle);
         }
 
-        if (getActivity() != null && getLoaderManager().getLoader(LOADER_INGREDIENTS_ID) == null) {
+        this.recipeId = recipeId;
+        this.recipeTitle = recipeTitle;
 
-            this.recipeId = recipeId;
-            this.recipeTitle = recipeTitle;
-
-            getLoaderManager().initLoader(LOADER_INGREDIENTS_ID, null, this);
+        if (adapterData == null) {
+            asyncTaskUtil = new AsyncTaskUtil<>(this);
+            asyncTaskUtil.execute(recipeId);
+        } else {
+            ingredientsStepsAdapter.swipeData(adapterData);
         }
     }
 
@@ -119,6 +123,15 @@ public class IngredientsStepsFragment extends Fragment implements LoaderManager.
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+        if (savedInstanceState != null) {
+            if (savedInstanceState.containsKey(LIST_STATE)) {
+                listState = savedInstanceState.getParcelable(LIST_STATE);
+            }
+            if (savedInstanceState.containsKey(DATA_STATE)) {
+                adapterData = savedInstanceState.getParcelableArrayList(DATA_STATE);
+            }
+        }
         setupIngredientsStepsList();
 
         if (!getResources().getBoolean(R.bool.isSmallestWidth)) {
@@ -129,6 +142,13 @@ public class IngredientsStepsFragment extends Fragment implements LoaderManager.
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+    }
+
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putParcelable(LIST_STATE, ingredientsStepsList.getLayoutManager().onSaveInstanceState());
+        outState.putParcelableArrayList(DATA_STATE, adapterData);
     }
 
     @Override
@@ -144,6 +164,9 @@ public class IngredientsStepsFragment extends Fragment implements LoaderManager.
     @Override
     public void onPause() {
         super.onPause();
+        if (asyncTaskUtil != null) {
+            asyncTaskUtil.cancel(true);
+        }
     }
 
     @Override
@@ -159,8 +182,6 @@ public class IngredientsStepsFragment extends Fragment implements LoaderManager.
     @Override
     public void onDestroy() {
         super.onDestroy();
-        getLoaderManager().destroyLoader(LOADER_INGREDIENTS_ID);
-        getLoaderManager().destroyLoader(LOADER_STEPS_ID);
     }
 
     @Override
@@ -174,54 +195,6 @@ public class IngredientsStepsFragment extends Fragment implements LoaderManager.
         ingredientsStepsAdapter = new IngredientsStepsAdapter();
         ingredientsStepsAdapter.setCardItemClickListerner(this);
         ingredientsStepsList.setAdapter(ingredientsStepsAdapter);
-    }
-
-    @NonNull
-    @Override
-    public Loader<Cursor> onCreateLoader(int id, @Nullable Bundle args) {
-        switch (id) {
-            case LOADER_INGREDIENTS_ID:
-                progress.setVisibility(View.VISIBLE);
-                return IngredientsProviderUtil.getIngredientsByRecipeId(recipeId, getContext());
-            case LOADER_STEPS_ID:
-                return StepsProviderUtil.getStepsByRecipeId(recipeId, getContext());
-            default:
-                throw new IllegalArgumentException("No loader id found");
-        }
-    }
-
-    @Override
-    public void onLoadFinished(@NonNull Loader loader, Cursor data) {
-        switch (loader.getId()) {
-            case LOADER_INGREDIENTS_ID:
-                adapterData.clear();
-                addIngredients(data);
-                if (getLoaderManager().getLoader(LOADER_STEPS_ID) == null) {
-                    getLoaderManager().initLoader(LOADER_STEPS_ID, null, this);
-                }
-                break;
-            case LOADER_STEPS_ID:
-                addSteps(data);
-                ingredientsStepsAdapter.swipeData(adapterData);
-                ingredientsStepsList.setAdapter(ingredientsStepsAdapter);
-                progress.setVisibility(View.GONE);
-
-                if (adapterData.size() == 0) {
-                    noResults.setVisibility(View.VISIBLE);
-                    ingredientsStepsList.setVisibility(View.GONE);
-                }
-                if (getResources().getBoolean(R.bool.isSmallestWidth)) {
-                    IngredientsFragment fragment = IngredientsFragment.newInstance(recipeId, recipeTitle, null);
-                    loadFragment(fragment);
-                }
-
-                break;
-        }
-    }
-
-    @Override
-    public void onLoaderReset(@NonNull Loader loader) {
-
     }
 
     private void addIngredients(Cursor data) {
@@ -252,17 +225,18 @@ public class IngredientsStepsFragment extends Fragment implements LoaderManager.
 
     private void addSteps(Cursor data) {
 
-        data.moveToFirst();
+        if (data.moveToFirst()) {
 
-        while (data.moveToNext()) {
-            StepModelAdapter stepModelAdapter = new StepModelAdapter();
-            stepModelAdapter.setId(data.getInt(data.getColumnIndex(StepContract._ID)));
-            stepModelAdapter.setViewType(IngredientsStepsAdapter.STEP_VIEW_TYPE);
-            stepModelAdapter.setDescription(data.getString(data.getColumnIndex(StepContract.DESCRIPTION)));
-            stepModelAdapter.setShortDescription(data.getString(data.getColumnIndex(StepContract.SHORT_DESCRIPTION)));
-            stepModelAdapter.setThumbnailURL(data.getString(data.getColumnIndex(StepContract.THUMBNAIL_URL)));
-            stepModelAdapter.setVideoURL(data.getString(data.getColumnIndex(StepContract.VIDEO_URL)));
-            adapterData.add(stepModelAdapter);
+            while (data.moveToNext()) {
+                StepModelAdapter stepModelAdapter = new StepModelAdapter();
+                stepModelAdapter.setId(data.getInt(data.getColumnIndex(StepContract._ID)));
+                stepModelAdapter.setViewType(IngredientsStepsAdapter.STEP_VIEW_TYPE);
+                stepModelAdapter.setDescription(data.getString(data.getColumnIndex(StepContract.DESCRIPTION)));
+                stepModelAdapter.setShortDescription(data.getString(data.getColumnIndex(StepContract.SHORT_DESCRIPTION)));
+                stepModelAdapter.setThumbnailURL(data.getString(data.getColumnIndex(StepContract.THUMBNAIL_URL)));
+                stepModelAdapter.setVideoURL(data.getString(data.getColumnIndex(StepContract.VIDEO_URL)));
+                adapterData.add(stepModelAdapter);
+            }
         }
     }
 
@@ -287,5 +261,47 @@ public class IngredientsStepsFragment extends Fragment implements LoaderManager.
     public void onStepCardItemClick(long stepId, int position) {
         StepFragment fragment = StepFragment.newInstance(stepId, position, recipeTitle, detailsActivityFragmentListener);
         loadFragment(fragment);
+    }
+
+    @Override
+    public void onPreExecute() {
+        progress.setVisibility(View.VISIBLE);
+        adapterData = new ArrayList<>();
+    }
+
+    @Override
+    public void onProgressUpdate(Void... values) {
+
+    }
+
+    @Override
+    public void onPostExecute(List<BaseModelAdapter> baseModelAdapters) {
+        ingredientsStepsAdapter.swipeData(baseModelAdapters);
+        ingredientsStepsList.getLayoutManager().onRestoreInstanceState(listState);
+        progress.setVisibility(View.GONE);
+    }
+
+    @Override
+    public void onCancelled(List<BaseModelAdapter> baseModelAdapters) {
+
+    }
+
+    @Override
+    public void onCancelled() {
+
+    }
+
+    @Override
+    public List<BaseModelAdapter> doInBackground(Long... longs) {
+
+        if (getContext() != null) {
+            Cursor ingredientCursor = IngredientsProviderUtil.getIngredientsByRecipeId(recipeId, getContext());
+            Cursor stepCursor = StepsProviderUtil.getStepsByRecipeId(recipeId, getContext());
+
+            addIngredients(ingredientCursor);
+            addSteps(stepCursor);
+        }
+
+        return adapterData;
     }
 }

@@ -16,9 +16,9 @@ import br.com.bezerra.diego.bakingapp.data.service.model.RecipeJsonModel;
 
 public class IngredientsProviderUtil {
 
-    public static CursorLoader getIngredientsByRecipeId(long recipeId, Context context) {
+    public static Cursor getIngredientsByRecipeId(long recipeId, Context context) {
         Uri uri = BakingAppProvider.Ingredients.withRecipeId(recipeId);
-        return new CursorLoader(context, uri, null, null, null, null);
+        return context.getContentResolver().query(uri, null, null, null, null);
     }
 
     public static int bulkInsert(Context context, List<RecipeJsonModel> recipes) {

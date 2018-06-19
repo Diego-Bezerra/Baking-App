@@ -1,7 +1,6 @@
 package br.com.bezerra.diego.bakingapp.gui.detailsActivity.ingredient;
 
 import android.content.Context;
-import android.database.Cursor;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -12,13 +11,12 @@ import android.widget.TextView;
 import java.util.Locale;
 
 import br.com.bezerra.diego.bakingapp.R;
-import br.com.bezerra.diego.bakingapp.data.database.contract.IngredientContract;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
 public class IngredientsAdapter extends RecyclerView.Adapter<IngredientsAdapter.ViewHolder> {
 
-    private Cursor mCursor;
+    private IngredientModelAdapter[] mIngredients;
 
     @NonNull
     @Override
@@ -29,16 +27,16 @@ public class IngredientsAdapter extends RecyclerView.Adapter<IngredientsAdapter.
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        holder.bind(mCursor);
+        holder.bind(mIngredients);
     }
 
     @Override
     public int getItemCount() {
-        return mCursor != null ? mCursor.getCount() : 0;
+        return mIngredients != null ? mIngredients.length : 0;
     }
 
-    public void swipeData(Cursor data) {
-        mCursor = data;
+    public void swipeData(IngredientModelAdapter[] data) {
+        mIngredients = data;
         this.notifyDataSetChanged();
     }
 
@@ -56,14 +54,14 @@ public class IngredientsAdapter extends RecyclerView.Adapter<IngredientsAdapter.
             ButterKnife.bind(this, itemView);
         }
 
-        void bind(Cursor data) {
+        void bind(IngredientModelAdapter[] ingredients) {
 
-            data.moveToPosition(getAdapterPosition());
+            IngredientModelAdapter model = ingredients[getAdapterPosition()];
             Context context = itemView.getContext();
 
-            String ingredientTitle = data.getString(data.getColumnIndex(IngredientContract.INGREDIENT));
-            double quantity = data.getDouble(data.getColumnIndex(IngredientContract.QUANTITY));
-            String measure = data.getString(data.getColumnIndex(IngredientContract.MEASURE));
+            String ingredientTitle = model.getIngredient();
+            double quantity = model.getQuantity();
+            String measure = model.getMeasure();
             String quantityFormat = context.getString(R.string.ingredient_quantity_format);
             String measureFormat = context.getString(R.string.ingredient_measure_format);
 

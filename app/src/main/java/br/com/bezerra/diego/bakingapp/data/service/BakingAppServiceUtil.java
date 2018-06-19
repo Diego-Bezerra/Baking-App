@@ -2,8 +2,6 @@ package br.com.bezerra.diego.bakingapp.data.service;
 
 import android.content.Context;
 import android.database.Cursor;
-import android.support.annotation.Nullable;
-import android.support.v4.content.AsyncTaskLoader;
 
 import java.io.IOException;
 import java.util.List;
@@ -23,54 +21,40 @@ public class BakingAppServiceUtil {
         void noInternetConnection();
     }
 
-    public static synchronized AsyncTaskLoader<Cursor> syncRecipesData(final Context context
+    public static synchronized Cursor syncRecipesData(final Context context
             , final NoConnectivityReceiverListener noConnectivityReceiverListener) {
 
-        return new AsyncTaskLoader<Cursor>(context) {
+        Cursor cursor = RecipeProviderUtil.getAllRecipesCursor(context);
+        if (cursor == null || cursor.getCount() == 0) {
 
-            @Override
-            protected void onStartLoading() {
-                super.onStartLoading();
-                forceLoad();
-            }
-
-            @Nullable
-            @Override
-            public Cursor loadInBackground() {
-
-                Cursor cursor = RecipeProviderUtil.getAllRecipesCursor(context);
-                if (cursor == null || cursor.getCount() == 0) {
-
-                    if (!ConnectivityReceiver.isConnected()) {
-                        if (noConnectivityReceiverListener != null) {
-                            noConnectivityReceiverListener.noInternetConnection();
-                        }
-                        return cursor;
-                    }
-
-                    BakingAppService bakingAppService = NetworkUtil.retrofit.create(BakingAppService.class);
-                    Call<List<RecipeJsonModel>> listCall = bakingAppService.getRecipes();
-
-                    Response<List<RecipeJsonModel>> response = null;
-                    try {
-                        response = listCall.execute();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-
-                    if (response != null) {
-                        List<RecipeJsonModel> recipes = response.body();
-                        if (recipes != null && recipes.size() > 0) {
-                            RecipeProviderUtil.bulkInsert(context, recipes);
-                            IngredientsProviderUtil.bulkInsert(context, recipes);
-                            StepsProviderUtil.bulkInsert(context, recipes);
-                            cursor = RecipeProviderUtil.getAllRecipesCursor(context);
-                        }
-                    }
+            if (!ConnectivityReceiver.isConnected()) {
+                if (noConnectivityReceiverListener != null) {
+                    noConnectivityReceiverListener.noInternetConnection();
                 }
-
                 return cursor;
             }
-        };
+
+            BakingAppService bakingAppService = NetworkUtil.retrofit.create(BakingAppService.class);
+            Call<List<RecipeJsonModel>> listCall = bakingAppService.getRecipes();
+
+            Response<List<RecipeJsonModel>> response = null;
+            try {
+                response = listCall.execute();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            if (response != null) {
+                List<RecipeJsonModel> recipes = response.body();
+                if (recipes != null && recipes.size() > 0) {
+                    RecipeProviderUtil.bulkInsert(context, recipes);
+                    IngredientsProviderUtil.bulkInsert(context, recipes);
+                    StepsProviderUtil.bulkInsert(context, recipes);
+                    cursor = RecipeProviderUtil.getAllRecipesCursor(context);
+                }
+            }
+        }
+
+        return cursor;
     }
 }

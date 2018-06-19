@@ -5,11 +5,10 @@ import android.content.IntentFilter;
 import android.database.Cursor;
 import android.net.ConnectivityManager;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.LoaderManager;
-import android.support.v4.content.Loader;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -23,14 +22,16 @@ import br.com.bezerra.diego.bakingapp.BakingAppApplication;
 import br.com.bezerra.diego.bakingapp.R;
 import br.com.bezerra.diego.bakingapp.data.service.BakingAppServiceUtil;
 import br.com.bezerra.diego.bakingapp.gui.detailsActivity.DetailsActivity;
+import br.com.bezerra.diego.bakingapp.util.AsyncTaskUtil;
 import br.com.bezerra.diego.bakingapp.util.ConnectivityReceiver;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
-public class RecipesFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>
+public class RecipesFragment extends Fragment implements AsyncTaskUtil.AsyncTaskListener<Void, Void, Cursor>
         , BakingAppServiceUtil.NoConnectivityReceiverListener, ConnectivityReceiver.ConnectivityReceiverListener, RecipesListAdapter.RecipeAdapterItemClickListerner {
 
-    private final int LOADER_ID = 3;
+    private static String LIST_STATE = "LIST_STATE";
+    private static String DATA_STATE = "DATA_STATE";
 
     @BindView(R.id.recipesList)
     RecyclerView recipesList;
@@ -41,6 +42,9 @@ public class RecipesFragment extends Fragment implements LoaderManager.LoaderCal
 
     private RecipesListAdapter listAdapter;
     private ConnectivityReceiver mConnectivityReceiver;
+    private AsyncTaskUtil<Void, Void, Cursor> asyncTask;
+    private RecipeModelAdapter[] recipesData;
+    private Parcelable listState;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -59,16 +63,39 @@ public class RecipesFragment extends Fragment implements LoaderManager.LoaderCal
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        setupRecipesList(savedInstanceState);
-        if (getActivity() != null && getLoaderManager().getLoader(LOADER_ID) == null) {
-            getLoaderManager().initLoader(LOADER_ID, null, this);
+        setupRecipesList();
+
+        if (savedInstanceState != null && savedInstanceState.containsKey(DATA_STATE)) {
+            recipesData = (RecipeModelAdapter[]) savedInstanceState.getParcelableArray(DATA_STATE);
+        }
+
+        if (recipesData == null) {
+            asyncTask = new AsyncTaskUtil<>(RecipesFragment.this);
+            asyncTask.execute();
+        } else {
+            listAdapter.swipeData(recipesData);
+        }
+    }
+
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putParcelable(LIST_STATE, recipesList.getLayoutManager().onSaveInstanceState());
+        outState.putParcelableArray(DATA_STATE, recipesData);
+    }
+
+    @Override
+    public void onViewStateRestored(@Nullable Bundle savedInstanceState) {
+        super.onViewStateRestored(savedInstanceState);
+        if (savedInstanceState != null && savedInstanceState.containsKey(LIST_STATE)) {
+            listState = savedInstanceState.getParcelable(LIST_STATE);
+            recipesList.getLayoutManager().onRestoreInstanceState(listState);
         }
     }
 
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-
     }
 
     @Override
@@ -84,6 +111,9 @@ public class RecipesFragment extends Fragment implements LoaderManager.LoaderCal
     @Override
     public void onPause() {
         super.onPause();
+        if (asyncTask != null) {
+            asyncTask.cancel(true);
+        }
     }
 
     @Override
@@ -94,7 +124,6 @@ public class RecipesFragment extends Fragment implements LoaderManager.LoaderCal
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        getLoaderManager().destroyLoader(LOADER_ID);
     }
 
     @Override
@@ -107,7 +136,7 @@ public class RecipesFragment extends Fragment implements LoaderManager.LoaderCal
         super.onDetach();
     }
 
-    private void setupRecipesList(@Nullable Bundle savedInstanceState) {
+    private void setupRecipesList() {
 
         boolean isSmallestWidth = getResources().getBoolean(R.bool.isSmallestWidth);
 
@@ -142,17 +171,30 @@ public class RecipesFragment extends Fragment implements LoaderManager.LoaderCal
         }
     }
 
-    @NonNull
     @Override
-    public Loader<Cursor> onCreateLoader(int id, @Nullable Bundle args) {
-        progress.setVisibility(View.VISIBLE);
-        return BakingAppServiceUtil.syncRecipesData(getContext(), this);
+    public void onItemClick(long recipeId, String recipeTitle) {
+        Intent intent = new Intent(getContext(), DetailsActivity.class);
+        intent.putExtra(DetailsActivity.RECIPE_ID_EXTRA, recipeId);
+        intent.putExtra(DetailsActivity.RECIPE_TITLE_EXTRA, recipeTitle);
+        startActivity(intent);
     }
 
     @Override
-    public void onLoadFinished(@NonNull Loader loader, Cursor data) {
+    public void onPreExecute() {
+        progress.setVisibility(View.VISIBLE);
+    }
+
+    @Override
+    public void onProgressUpdate(Void... values) {
+
+    }
+
+    @Override
+    public void onPostExecute(Cursor data) {
         if (data != null && data.getCount() > 0) {
-            listAdapter.swipeCursor(data);
+            recipesData = RecipeModelAdapter.recipesFromCursor(data);
+            listAdapter.swipeData(recipesData);
+            recipesList.getLayoutManager().onRestoreInstanceState(listState);
             recipesList.setVisibility(View.VISIBLE);
             noResults.setVisibility(View.GONE);
         } else {
@@ -164,16 +206,18 @@ public class RecipesFragment extends Fragment implements LoaderManager.LoaderCal
     }
 
     @Override
-    public void onLoaderReset(@NonNull Loader loader) {
-
+    public void onCancelled(Cursor cursor) {
+        progress.setVisibility(View.GONE);
     }
 
     @Override
-    public void onItemClick(long recipeId, String recipeTitle) {
-        Intent intent = new Intent(getContext(), DetailsActivity.class);
-        intent.putExtra(DetailsActivity.RECIPE_ID_EXTRA, recipeId);
-        intent.putExtra(DetailsActivity.RECIPE_TITLE_EXTRA, recipeTitle);
-        startActivity(intent);
+    public void onCancelled() {
+        progress.setVisibility(View.GONE);
+    }
+
+    @Override
+    public Cursor doInBackground(Void... voids) {
+        return BakingAppServiceUtil.syncRecipesData(getContext(), this);
     }
 }
 

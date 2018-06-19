@@ -3,11 +3,10 @@ package br.com.bezerra.diego.bakingapp.gui.detailsActivity.ingredient;
 import android.content.Context;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.LoaderManager;
-import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -21,13 +20,15 @@ import br.com.bezerra.diego.bakingapp.R;
 import br.com.bezerra.diego.bakingapp.data.database.util.IngredientsProviderUtil;
 import br.com.bezerra.diego.bakingapp.gui.detailsActivity.DetailsActivity;
 import br.com.bezerra.diego.bakingapp.gui.detailsActivity.DetailsActivityFragmentListener;
+import br.com.bezerra.diego.bakingapp.util.AsyncTaskUtil;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
-public class IngredientsFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
+public class IngredientsFragment extends Fragment implements AsyncTaskUtil.AsyncTaskListener<Long, Void, IngredientModelAdapter[]> {
 
     public static final String FRAGMENT_TAG = "IngredientsStepsFragment";
-    public final int LOADER_ID = 2;
+    private static String LIST_STATE = "LIST_STATE";
+    private static String DATA_STATE = "DATA_STATE";
 
     @BindView(R.id.ingredientsList)
     RecyclerView ingredientsList;
@@ -38,6 +39,9 @@ public class IngredientsFragment extends Fragment implements LoaderManager.Loade
 
     private long recipeId;
     private IngredientsAdapter adapter;
+    private Parcelable listState;
+    private AsyncTaskUtil<Long, Void, IngredientModelAdapter[]> asyncTaskUtil;
+    private IngredientModelAdapter[] ingredientModelData;
     private DetailsActivityFragmentListener detailsActivityFragmentListener;
 
     public static IngredientsFragment newInstance(long recipeId, String recipeTitle, DetailsActivityFragmentListener detailsActivityFragmentListener) {
@@ -63,7 +67,7 @@ public class IngredientsFragment extends Fragment implements LoaderManager.Loade
                 detailsActivityFragmentListener = (DetailsActivityFragmentListener) bundle.getSerializable(DetailsActivity.FRAGMENT_LISTENER_EXTRA);
             }
             if (!getResources().getBoolean(R.bool.isSmallestWidth) && bundle.containsKey(DetailsActivity.RECIPE_TITLE_EXTRA)) {
-                AppCompatActivity activity = (AppCompatActivity)getActivity();
+                AppCompatActivity activity = (AppCompatActivity) getActivity();
                 if (activity != null && activity.getSupportActionBar() != null) {
                     String recipeTitle = bundle.getString(DetailsActivity.RECIPE_TITLE_EXTRA);
                     String title = String.format(getString(R.string.recipe_ingredient_title_format), recipeTitle);
@@ -91,14 +95,56 @@ public class IngredientsFragment extends Fragment implements LoaderManager.Loade
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         setupList();
-        if (getActivity() != null && getLoaderManager().getLoader(LOADER_ID) == null) {
-            getLoaderManager().initLoader(LOADER_ID, null, this);
+
+        if (savedInstanceState != null && savedInstanceState.containsKey(DATA_STATE)) {
+            ingredientModelData = (IngredientModelAdapter[]) savedInstanceState.getParcelableArray(DATA_STATE);
+        }
+
+        if (ingredientModelData == null) {
+            asyncTaskUtil = new AsyncTaskUtil<>(this);
+            asyncTaskUtil.execute(recipeId);
+        } else {
+            adapter.swipeData(ingredientModelData);
         }
     }
 
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+    }
+
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putParcelable(LIST_STATE, ingredientsList.getLayoutManager().onSaveInstanceState());
+        outState.putParcelableArray(DATA_STATE, ingredientModelData);
+    }
+
+    @Override
+    public void onViewStateRestored(@Nullable Bundle savedInstanceState) {
+        super.onViewStateRestored(savedInstanceState);
+        if (savedInstanceState != null && savedInstanceState.containsKey(LIST_STATE)) {
+            listState = savedInstanceState.getParcelable(LIST_STATE);
+            ingredientsList.getLayoutManager().onRestoreInstanceState(listState);
+        }
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        if (asyncTaskUtil != null) {
+            asyncTaskUtil.cancel(true);
+        }
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
     }
 
     private void setupList() {
@@ -108,17 +154,21 @@ public class IngredientsFragment extends Fragment implements LoaderManager.Loade
         ingredientsList.setAdapter(adapter);
     }
 
-    @NonNull
     @Override
-    public Loader<Cursor> onCreateLoader(int id, @Nullable Bundle args) {
+    public void onPreExecute() {
         progress.setVisibility(View.VISIBLE);
-        return IngredientsProviderUtil.getIngredientsByRecipeId(recipeId, getContext());
     }
 
     @Override
-    public void onLoadFinished(@NonNull Loader<Cursor> loader, Cursor data) {
-        if (data != null && data.getCount() > 0) {
-            adapter.swipeData(data);
+    public void onProgressUpdate(Void... values) {
+
+    }
+
+    @Override
+    public void onPostExecute(IngredientModelAdapter[] ingredientModelAdapters) {
+        if (ingredientModelAdapters != null && ingredientModelAdapters.length > 0) {
+            ingredientModelData = ingredientModelAdapters;
+            adapter.swipeData(ingredientModelAdapters);
         } else {
             ingredientsList.setVisibility(View.GONE);
             noResults.setVisibility(View.VISIBLE);
@@ -127,7 +177,23 @@ public class IngredientsFragment extends Fragment implements LoaderManager.Loade
     }
 
     @Override
-    public void onLoaderReset(@NonNull Loader<Cursor> loader) {
+    public void onCancelled(IngredientModelAdapter[] ingredientModelAdapters) {
 
+    }
+
+    @Override
+    public void onCancelled() {
+
+    }
+
+    @Override
+    public IngredientModelAdapter[] doInBackground(Long... longs) {
+
+        if (getContext() != null) {
+            Cursor cursor = IngredientsProviderUtil.getIngredientsByRecipeId(recipeId, getContext());
+            return IngredientModelAdapter.getIngredientsFromCursor(cursor);
+        }
+
+        return new IngredientModelAdapter[0];
     }
 }

@@ -37,11 +37,12 @@ public class DetailsActivity extends AppCompatActivity implements DetailsActivit
                 if (savedInstanceState == null) {
                     fragment = IngredientsStepsFragment.newInstance(recipeId, recipeTitle, this);
                 } else {
-                    fragment = getSupportFragmentManager().findFragmentByTag(IngredientsStepsFragment.FRAGMENT_TAG);
+                    int lastPosition = getSupportFragmentManager().getFragments().size() - 1;
+                    fragment = getSupportFragmentManager().getFragments().get(lastPosition);
                 }
 
                 getSupportFragmentManager().beginTransaction()
-                        .replace(R.id.fragmentContainer, fragment, IngredientsStepsFragment.FRAGMENT_TAG)
+                        .replace(R.id.fragmentContainer, fragment)
                         .commit();
             } else {
                 IngredientsStepsFragment ingredientsStepsFragment = (IngredientsStepsFragment) getSupportFragmentManager().findFragmentById(R.id.ingredientsStepsFragment);
