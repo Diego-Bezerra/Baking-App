@@ -8,8 +8,6 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.LoaderManager;
-import android.support.v4.content.Loader;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -38,17 +36,17 @@ import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
 import com.google.android.exoplayer2.util.Util;
 
 import br.com.bezerra.diego.bakingapp.R;
-import br.com.bezerra.diego.bakingapp.data.database.contract.StepContract;
 import br.com.bezerra.diego.bakingapp.data.database.util.StepsProviderUtil;
 import br.com.bezerra.diego.bakingapp.gui.detailsActivity.DetailsActivity;
 import br.com.bezerra.diego.bakingapp.gui.detailsActivity.DetailsActivityFragmentListener;
+import br.com.bezerra.diego.bakingapp.util.AsyncTaskUtil;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
-public class StepFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>, ExoPlayer.EventListener {
+public class StepFragment extends Fragment implements ExoPlayer.EventListener, AsyncTaskUtil.AsyncTaskListener<Long, Void, StepModelData> {
 
     public static final String FRAGMENT_TAG = "StepFragment";
-    private final int LOADER_ID = 1;
+    public static final String DATA_STATE = "data_state";
 
     @BindView(R.id.container)
     ViewGroup container;
@@ -69,6 +67,8 @@ public class StepFragment extends Fragment implements LoaderManager.LoaderCallba
     private long stepId;
     private String recipeTitle;
     private int stepPosition;
+    private AsyncTaskUtil<Long, Void, StepModelData> asyncTaskUtil;
+    private StepModelData stepData;
     private DetailsActivityFragmentListener detailsActivityFragmentListener;
 
     public static StepFragment newInstance(long stepId, int stepPosition, String recipeTitle, DetailsActivityFragmentListener detailsActivityFragmentListener) {
@@ -122,9 +122,17 @@ public class StepFragment extends Fragment implements LoaderManager.LoaderCallba
                 String title = String.format(getString(R.string.recipe_step_title_format), recipeTitle, stepPosition);
                 activity.getSupportActionBar().setTitle(title);
             }
-            if (activity.getSupportLoaderManager().getLoader(LOADER_ID) == null) {
-                getLoaderManager().initLoader(LOADER_ID, null, this);
-            }
+        }
+
+        if (savedInstanceState != null && savedInstanceState.containsKey(DATA_STATE)) {
+            stepData = savedInstanceState.getParcelable(DATA_STATE);
+        }
+
+        if (stepData == null) {
+            asyncTaskUtil = new AsyncTaskUtil<>(this);
+            asyncTaskUtil.execute(stepId);
+        } else {
+            bindData(stepData);
         }
     }
 
@@ -159,6 +167,20 @@ public class StepFragment extends Fragment implements LoaderManager.LoaderCallba
     }
 
     @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putParcelable(DATA_STATE, stepData);
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        if (asyncTaskUtil != null) {
+            asyncTaskUtil.cancel(true);
+        }
+    }
+
+    @Override
     public void onDetach() {
         super.onDetach();
     }
@@ -173,34 +195,47 @@ public class StepFragment extends Fragment implements LoaderManager.LoaderCallba
         super.onStop();
     }
 
-    @NonNull
-    @Override
-    public Loader<Cursor> onCreateLoader(int id, @Nullable Bundle args) {
-        progress.setVisibility(View.VISIBLE);
-        return StepsProviderUtil.getStepsById(stepId, getContext());
-    }
-
-    @Override
-    public void onLoadFinished(@NonNull Loader<Cursor> loader, Cursor data) {
-        if (data != null && data.getCount() > 0 && data.moveToFirst()) {
-
-            String stepDescription = data.getString(data.getColumnIndex(StepContract.DESCRIPTION));
-            String videoUrl = data.getString(data.getColumnIndex(StepContract.VIDEO_URL));
-
+    private void bindData(StepModelData data) {
+        if (data != null) {
+            stepData = data;
+            String stepDescription = data.getDescription();
+            String videoUrl = data.getVideoUrl();
             this.stepDescription.setText(stepDescription);
             initializePlayer(Uri.parse(videoUrl));
-
         } else {
             container.setVisibility(View.GONE);
         }
-
-        progress.setVisibility(View.GONE);
     }
 
-    @Override
-    public void onLoaderReset(@NonNull Loader<Cursor> loader) {
+//    @NonNull
+//    @Override
+//    public Loader<Cursor> onCreateLoader(int id, @Nullable Bundle args) {
+//        progress.setVisibility(View.VISIBLE);
+//        return StepsProviderUtil.getStepsById(stepId, getContext());
+//    }
+//
+//    @Override
+//    public void onLoadFinished(@NonNull Loader<Cursor> loader, Cursor data) {
+//        if (data != null && data.getCount() > 0 && data.moveToFirst()) {
+//
+//            String stepDescription = data.getString(data.getColumnIndex(StepContract.DESCRIPTION));
+//            String videoUrl = data.getString(data.getColumnIndex(StepContract.VIDEO_URL));
+//
+//            this.stepDescription.setText(stepDescription);
+//            initializePlayer(Uri.parse(videoUrl));
+//
+//        } else {
+//            container.setVisibility(View.GONE);
+//        }
+//
+//        progress.setVisibility(View.GONE);
+//    }
+//
+//    @Override
+//    public void onLoaderReset(@NonNull Loader<Cursor> loader) {
+//
+//    }
 
-    }
 
     @Override
     public void onTimelineChanged(Timeline timeline, Object manifest) {
@@ -230,5 +265,44 @@ public class StepFragment extends Fragment implements LoaderManager.LoaderCallba
     @Override
     public void onPositionDiscontinuity() {
 
+    }
+
+    @Override
+    public void onPreExecute() {
+        progress.setVisibility(View.VISIBLE);
+    }
+
+    @Override
+    public void onProgressUpdate(Void... values) {
+
+    }
+
+    @Override
+    public void onPostExecute(StepModelData stepModelData) {
+        bindData(stepModelData);
+        progress.setVisibility(View.GONE);
+    }
+
+    @Override
+    public void onCancelled(StepModelData stepModelData) {
+        progress.setVisibility(View.GONE);
+    }
+
+    @Override
+    public void onCancelled() {
+        progress.setVisibility(View.GONE);
+    }
+
+    @Override
+    public StepModelData doInBackground(Long... longs) {
+
+        if (getContext() != null) {
+            Cursor cursor = StepsProviderUtil.getStepsById(stepId, getContext());
+            stepData = new StepModelData(cursor);
+
+            return stepData;
+        }
+
+        return null;
     }
 }

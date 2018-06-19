@@ -4,7 +4,6 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
-import android.support.v4.content.CursorLoader;
 
 import java.util.List;
 
@@ -21,9 +20,9 @@ public class StepsProviderUtil {
         return context.getContentResolver().query(uri, null, null, null, null);
     }
 
-    public static CursorLoader getStepsById(long stepId, Context context) {
+    public static Cursor getStepsById(long stepId, Context context) {
         Uri uri = BakingAppProvider.Steps.withStepId(stepId);
-        return new CursorLoader(context, uri, null, null, null, null);
+        return context.getContentResolver().query(uri, null, null, null, null);
     }
 
     public static int bulkInsert(Context context, List<RecipeJsonModel> recipes) {
