@@ -6,7 +6,6 @@ import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -18,13 +17,14 @@ import android.widget.TextView;
 
 import br.com.bezerra.diego.bakingapp.R;
 import br.com.bezerra.diego.bakingapp.data.database.util.IngredientsProviderUtil;
+import br.com.bezerra.diego.bakingapp.gui.detailsActivity.BaseFragment;
 import br.com.bezerra.diego.bakingapp.gui.detailsActivity.DetailsActivity;
 import br.com.bezerra.diego.bakingapp.gui.detailsActivity.DetailsActivityFragmentListener;
 import br.com.bezerra.diego.bakingapp.util.AsyncTaskUtil;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
-public class IngredientsFragment extends Fragment implements AsyncTaskUtil.AsyncTaskListener<Long, Void, IngredientModelAdapter[]> {
+public class IngredientsFragment extends BaseFragment implements AsyncTaskUtil.AsyncTaskListener<Long, Void, IngredientModelAdapter[]> {
 
     public static final String FRAGMENT_TAG = "IngredientsStepsFragment";
     private static String LIST_STATE = "LIST_STATE";
@@ -46,6 +46,7 @@ public class IngredientsFragment extends Fragment implements AsyncTaskUtil.Async
 
     public static IngredientsFragment newInstance(long recipeId, String recipeTitle, DetailsActivityFragmentListener detailsActivityFragmentListener) {
         IngredientsFragment fragment = new IngredientsFragment();
+        fragment.fragmentTag = FRAGMENT_TAG;
         Bundle bundle = new Bundle();
         bundle.putLong(DetailsActivity.RECIPE_ID_EXTRA, recipeId);
         bundle.putString(DetailsActivity.RECIPE_TITLE_EXTRA, recipeTitle);

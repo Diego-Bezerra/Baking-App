@@ -45,4 +45,12 @@
         android:id="@+id/noResults"
         style="@style/NoResultsText" />
 
+    <Button
+        android:id="@+id/nextButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/next"
+        android:layout_margin="@dimen/default_half"
+        android:layout_gravity="bottom"/>
+
 </FrameLayout>

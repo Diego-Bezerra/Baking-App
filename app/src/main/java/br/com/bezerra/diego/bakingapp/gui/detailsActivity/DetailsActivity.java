@@ -1,8 +1,8 @@
 package br.com.bezerra.diego.bakingapp.gui.detailsActivity;
 
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
 
@@ -16,6 +16,7 @@ public class DetailsActivity extends AppCompatActivity implements DetailsActivit
     public static final String FRAGMENT_LISTENER_EXTRA = "fragment_listener_extra";
     public static final String STEP_POSITION_EXTRA = "step_position_extra";
     public static final String STEP_ID_EXTRA = "step_id_extra";
+    public static final String STEP_FRAGMENT_EXTRA = "step_fragament_extra";
 
     private String recipeTitle;
 
@@ -31,19 +32,21 @@ public class DetailsActivity extends AppCompatActivity implements DetailsActivit
 
             recipeTitle = bundle.getString(RECIPE_TITLE_EXTRA, "");
             long recipeId = bundle.getLong(RECIPE_ID_EXTRA);
+            boolean isSmallestWidth = getResources().getBoolean(R.bool.isSmallestWidth);
 
-            if (!getResources().getBoolean(R.bool.isSmallestWidth)) {
-                Fragment fragment;
+            if (!isSmallestWidth) {
+                BaseFragment fragment;
                 if (savedInstanceState == null) {
                     fragment = IngredientsStepsFragment.newInstance(recipeId, recipeTitle, this);
                 } else {
                     int lastPosition = getSupportFragmentManager().getFragments().size() - 1;
-                    fragment = getSupportFragmentManager().getFragments().get(lastPosition);
+                    fragment = (BaseFragment) getSupportFragmentManager().getFragments().get(lastPosition);
                 }
 
                 getSupportFragmentManager().beginTransaction()
-                        .replace(R.id.fragmentContainer, fragment)
+                        .replace(R.id.fragmentContainer, fragment, fragment.getFragmentTag())
                         .commit();
+
             } else {
                 IngredientsStepsFragment ingredientsStepsFragment = (IngredientsStepsFragment) getSupportFragmentManager().findFragmentById(R.id.ingredientsStepsFragment);
                 ingredientsStepsFragment.loadRecipe(recipeId, recipeTitle);
@@ -56,6 +59,12 @@ public class DetailsActivity extends AppCompatActivity implements DetailsActivit
         if (getSupportActionBar() != null) {
             getSupportActionBar().setTitle(recipeTitle);
         }
+    }
+
+    @Override
+    public void nextStep(@NonNull Integer position) {
+        IngredientsStepsFragment ingredientsStepsFragment = (IngredientsStepsFragment) getSupportFragmentManager().findFragmentByTag(IngredientsStepsFragment.FRAGMENT_TAG);
+        ingredientsStepsFragment.clickStepPosition(position);
     }
 
     @Override

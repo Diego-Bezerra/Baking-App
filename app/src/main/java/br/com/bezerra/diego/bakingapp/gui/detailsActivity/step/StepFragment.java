@@ -2,18 +2,20 @@ package br.com.bezerra.diego.bakingapp.gui.detailsActivity.step;
 
 import android.app.NotificationManager;
 import android.content.Context;
+import android.content.res.Configuration;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
@@ -37,46 +39,52 @@ import com.google.android.exoplayer2.util.Util;
 
 import br.com.bezerra.diego.bakingapp.R;
 import br.com.bezerra.diego.bakingapp.data.database.util.StepsProviderUtil;
+import br.com.bezerra.diego.bakingapp.gui.detailsActivity.BaseFragment;
 import br.com.bezerra.diego.bakingapp.gui.detailsActivity.DetailsActivity;
 import br.com.bezerra.diego.bakingapp.gui.detailsActivity.DetailsActivityFragmentListener;
 import br.com.bezerra.diego.bakingapp.util.AsyncTaskUtil;
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import butterknife.OnClick;
 
-public class StepFragment extends Fragment implements ExoPlayer.EventListener, AsyncTaskUtil.AsyncTaskListener<Long, Void, StepModelData> {
+public class StepFragment extends BaseFragment implements ExoPlayer.EventListener, AsyncTaskUtil.AsyncTaskListener<Long, Void, StepModelData> {
 
     public static final String FRAGMENT_TAG = "StepFragment";
     public static final String DATA_STATE = "data_state";
 
+    @Nullable
     @BindView(R.id.container)
     ViewGroup container;
     @BindView(R.id.playerView)
     SimpleExoPlayerView mPlayerView;
+    @Nullable
     @BindView(R.id.stepDescription)
     TextView stepDescription;
+    @Nullable
     @BindView(R.id.progress)
     ProgressBar progress;
+    @Nullable
     @BindView(R.id.noResults)
     TextView noResults;
+    @Nullable
+    @BindView(R.id.nextButton)
+    TextView nextButton;
 
     private SimpleExoPlayer mExoPlayer;
     private static MediaSessionCompat mMediaSession;
     private PlaybackStateCompat.Builder mStateBuilder;
     private NotificationManager mNotificationManager;
 
-    private long stepId;
-    private String recipeTitle;
-    private int stepPosition;
+    private StepFragmentBundle bundle;
     private AsyncTaskUtil<Long, Void, StepModelData> asyncTaskUtil;
     private StepModelData stepData;
     private DetailsActivityFragmentListener detailsActivityFragmentListener;
 
-    public static StepFragment newInstance(long stepId, int stepPosition, String recipeTitle, DetailsActivityFragmentListener detailsActivityFragmentListener) {
+    public static StepFragment newInstance(StepFragmentBundle stepFragmentBundle, DetailsActivityFragmentListener detailsActivityFragmentListener) {
         StepFragment stepFragment = new StepFragment();
+        stepFragment.fragmentTag = FRAGMENT_TAG;
         Bundle bundle = new Bundle();
-        bundle.putLong(DetailsActivity.STEP_ID_EXTRA, stepId);
-        bundle.putString(DetailsActivity.RECIPE_TITLE_EXTRA, recipeTitle);
-        bundle.putInt(DetailsActivity.STEP_POSITION_EXTRA, stepPosition);
+        bundle.putParcelable(DetailsActivity.STEP_FRAGMENT_EXTRA, stepFragmentBundle);
         bundle.putSerializable(DetailsActivity.FRAGMENT_LISTENER_EXTRA, detailsActivityFragmentListener);
         stepFragment.setArguments(bundle);
 
@@ -87,19 +95,13 @@ public class StepFragment extends Fragment implements ExoPlayer.EventListener, A
     public void onAttach(Context context) {
         super.onAttach(context);
 
-        Bundle bundle = getArguments();
-        if (bundle != null) {
-            if (bundle.containsKey(DetailsActivity.STEP_ID_EXTRA)) {
-                stepId = bundle.getLong(DetailsActivity.STEP_ID_EXTRA);
+        Bundle args = getArguments();
+        if (args != null) {
+            if (args.containsKey(DetailsActivity.STEP_FRAGMENT_EXTRA)) {
+                bundle = args.getParcelable(DetailsActivity.STEP_FRAGMENT_EXTRA);
             }
-            if (bundle.containsKey(DetailsActivity.RECIPE_TITLE_EXTRA)) {
-                recipeTitle = bundle.getString(DetailsActivity.RECIPE_TITLE_EXTRA);
-            }
-            if (bundle.containsKey(DetailsActivity.FRAGMENT_LISTENER_EXTRA)) {
-                detailsActivityFragmentListener = (DetailsActivityFragmentListener) bundle.getSerializable(DetailsActivity.FRAGMENT_LISTENER_EXTRA);
-            }
-            if (bundle.containsKey(DetailsActivity.STEP_POSITION_EXTRA)) {
-                stepPosition = bundle.getInt(DetailsActivity.STEP_POSITION_EXTRA);
+            if (args.containsKey(DetailsActivity.FRAGMENT_LISTENER_EXTRA)) {
+                detailsActivityFragmentListener = (DetailsActivityFragmentListener) args.getSerializable(DetailsActivity.FRAGMENT_LISTENER_EXTRA);
             }
         }
     }
@@ -107,7 +109,14 @@ public class StepFragment extends Fragment implements ExoPlayer.EventListener, A
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_step, container, false);
+        View view;
+        if (!getResources().getBoolean(R.bool.isSmallestWidth) && getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            view = inflater.inflate(R.layout.fragment_step_land, container, false);
+            hideSystemUI();
+        } else {
+            view = inflater.inflate(R.layout.fragment_step, container, false);
+        }
+
         ButterKnife.bind(this, view);
         return view;
     }
@@ -119,18 +128,19 @@ public class StepFragment extends Fragment implements ExoPlayer.EventListener, A
         AppCompatActivity activity = (AppCompatActivity) getActivity();
         if (activity != null) {
             if (!getResources().getBoolean(R.bool.isSmallestWidth) && activity.getSupportActionBar() != null) {
-                String title = String.format(getString(R.string.recipe_step_title_format), recipeTitle, stepPosition);
+                String title = String.format(getString(R.string.recipe_step_title_format), bundle.getRecipeTitle(), bundle.getStepPosition());
                 activity.getSupportActionBar().setTitle(title);
             }
         }
-
+        if (nextButton != null && bundle.getNextStepId() == null) {
+            nextButton.setVisibility(View.GONE);
+        }
         if (savedInstanceState != null && savedInstanceState.containsKey(DATA_STATE)) {
             stepData = savedInstanceState.getParcelable(DATA_STATE);
         }
-
         if (stepData == null) {
             asyncTaskUtil = new AsyncTaskUtil<>(this);
-            asyncTaskUtil.execute(stepId);
+            asyncTaskUtil.execute(bundle.getStepId());
         } else {
             bindData(stepData);
         }
@@ -153,6 +163,32 @@ public class StepFragment extends Fragment implements ExoPlayer.EventListener, A
                     getContext(), userAgent), new DefaultExtractorsFactory(), null, null);
             mExoPlayer.prepare(mediaSource);
             mExoPlayer.setPlayWhenReady(true);
+        }
+    }
+
+    private void hideSystemUI() {
+
+        if (getActivity() == null) return;
+
+        View decorView = getActivity().getWindow().getDecorView();
+        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            decorView.setSystemUiVisibility(
+                    View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                            // Set the content to appear under the system bars so that the
+                            // content doesn't resize when the system bars hide and show.
+                            | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                            | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                            | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                            // Hide the nav bar and status bar
+                            | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                            | View.SYSTEM_UI_FLAG_FULLSCREEN);
+        } else {
+            decorView.setSystemUiVisibility(
+                    View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                            | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                            | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                            | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                            | View.SYSTEM_UI_FLAG_FULLSCREEN);
         }
     }
 
@@ -198,44 +234,26 @@ public class StepFragment extends Fragment implements ExoPlayer.EventListener, A
     private void bindData(StepModelData data) {
         if (data != null) {
             stepData = data;
-            String stepDescription = data.getDescription();
+
+            if (this.stepDescription != null) {
+                String stepDescription = data.getDescription();
+                this.stepDescription.setText(stepDescription);
+            }
+
             String videoUrl = data.getVideoUrl();
-            this.stepDescription.setText(stepDescription);
             initializePlayer(Uri.parse(videoUrl));
         } else {
-            container.setVisibility(View.GONE);
+            if (container != null) {
+                container.setVisibility(View.GONE);
+            }
         }
     }
 
-//    @NonNull
-//    @Override
-//    public Loader<Cursor> onCreateLoader(int id, @Nullable Bundle args) {
-//        progress.setVisibility(View.VISIBLE);
-//        return StepsProviderUtil.getStepsById(stepId, getContext());
-//    }
-//
-//    @Override
-//    public void onLoadFinished(@NonNull Loader<Cursor> loader, Cursor data) {
-//        if (data != null && data.getCount() > 0 && data.moveToFirst()) {
-//
-//            String stepDescription = data.getString(data.getColumnIndex(StepContract.DESCRIPTION));
-//            String videoUrl = data.getString(data.getColumnIndex(StepContract.VIDEO_URL));
-//
-//            this.stepDescription.setText(stepDescription);
-//            initializePlayer(Uri.parse(videoUrl));
-//
-//        } else {
-//            container.setVisibility(View.GONE);
-//        }
-//
-//        progress.setVisibility(View.GONE);
-//    }
-//
-//    @Override
-//    public void onLoaderReset(@NonNull Loader<Cursor> loader) {
-//
-//    }
-
+    private void setProgress(boolean show) {
+        if (progress != null) {
+            progress.setVisibility(show ? View.VISIBLE : View.GONE);
+        }
+    }
 
     @Override
     public void onTimelineChanged(Timeline timeline, Object manifest) {
@@ -269,7 +287,7 @@ public class StepFragment extends Fragment implements ExoPlayer.EventListener, A
 
     @Override
     public void onPreExecute() {
-        progress.setVisibility(View.VISIBLE);
+        setProgress(true);
     }
 
     @Override
@@ -280,29 +298,36 @@ public class StepFragment extends Fragment implements ExoPlayer.EventListener, A
     @Override
     public void onPostExecute(StepModelData stepModelData) {
         bindData(stepModelData);
-        progress.setVisibility(View.GONE);
+        setProgress(false);
     }
 
     @Override
     public void onCancelled(StepModelData stepModelData) {
-        progress.setVisibility(View.GONE);
+        setProgress(false);
     }
 
     @Override
     public void onCancelled() {
-        progress.setVisibility(View.GONE);
+        setProgress(false);
     }
 
     @Override
     public StepModelData doInBackground(Long... longs) {
 
         if (getContext() != null) {
-            Cursor cursor = StepsProviderUtil.getStepsById(stepId, getContext());
+            Cursor cursor = StepsProviderUtil.getStepsById(bundle.getStepId(), getContext());
             stepData = new StepModelData(cursor);
 
             return stepData;
         }
 
         return null;
+    }
+
+    @OnClick(R.id.nextButton)
+    public void nextButtonAction(Button button) {
+        if (bundle.getNextStepPosition() != null) {
+            detailsActivityFragmentListener.nextStep(bundle.getNextStepPosition());
+        }
     }
 }

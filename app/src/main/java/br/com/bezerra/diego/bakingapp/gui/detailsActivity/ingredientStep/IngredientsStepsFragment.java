@@ -18,25 +18,24 @@ import android.view.ViewGroup;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import br.com.bezerra.diego.bakingapp.R;
 import br.com.bezerra.diego.bakingapp.data.database.contract.IngredientContract;
 import br.com.bezerra.diego.bakingapp.data.database.contract.StepContract;
 import br.com.bezerra.diego.bakingapp.data.database.util.IngredientsProviderUtil;
 import br.com.bezerra.diego.bakingapp.data.database.util.StepsProviderUtil;
+import br.com.bezerra.diego.bakingapp.gui.detailsActivity.BaseFragment;
 import br.com.bezerra.diego.bakingapp.gui.detailsActivity.BaseModelAdapter;
 import br.com.bezerra.diego.bakingapp.gui.detailsActivity.DetailsActivity;
 import br.com.bezerra.diego.bakingapp.gui.detailsActivity.DetailsActivityFragmentListener;
 import br.com.bezerra.diego.bakingapp.gui.detailsActivity.ingredient.IngredientsFragment;
 import br.com.bezerra.diego.bakingapp.gui.detailsActivity.step.StepFragment;
+import br.com.bezerra.diego.bakingapp.gui.detailsActivity.step.StepFragmentBundle;
 import br.com.bezerra.diego.bakingapp.util.AsyncTaskUtil;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
-public class IngredientsStepsFragment extends Fragment implements IngredientsStepsAdapter.CardItemClickListerner
-        , AsyncTaskUtil.AsyncTaskListener<Long, Void, List<BaseModelAdapter>> {
+public class IngredientsStepsFragment extends BaseFragment implements IngredientsStepsAdapter.CardItemClickListener
+        , AsyncTaskUtil.AsyncTaskListener<Long, Void, BaseModelAdapter[]> {
 
     public static final String FRAGMENT_TAG = "IngredientsStepsFragment";
     private static String LIST_STATE = "LIST_STATE";
@@ -53,12 +52,13 @@ public class IngredientsStepsFragment extends Fragment implements IngredientsSte
     private long recipeId;
     private String recipeTitle;
     private Parcelable listState;
-    private ArrayList<BaseModelAdapter> adapterData;
+    private BaseModelAdapter[] adapterData;
     private DetailsActivityFragmentListener detailsActivityFragmentListener;
-    private AsyncTaskUtil<Long, Void, List<BaseModelAdapter>> asyncTaskUtil;
+    private AsyncTaskUtil<Long, Void, BaseModelAdapter[]> asyncTaskUtil;
 
     public static IngredientsStepsFragment newInstance(long recipeId, String recipeTitle, DetailsActivityFragmentListener detailsActivityFragmentListener) {
         IngredientsStepsFragment fragment = new IngredientsStepsFragment();
+        fragment.fragmentTag = FRAGMENT_TAG;
         Bundle bundle = new Bundle();
         bundle.putLong(DetailsActivity.RECIPE_ID_EXTRA, recipeId);
         bundle.putString(DetailsActivity.RECIPE_TITLE_EXTRA, recipeTitle);
@@ -129,7 +129,7 @@ public class IngredientsStepsFragment extends Fragment implements IngredientsSte
                 listState = savedInstanceState.getParcelable(LIST_STATE);
             }
             if (savedInstanceState.containsKey(DATA_STATE)) {
-                adapterData = savedInstanceState.getParcelableArrayList(DATA_STATE);
+                adapterData = (BaseModelAdapter[]) savedInstanceState.getParcelableArray(DATA_STATE);
             }
         }
         setupIngredientsStepsList();
@@ -148,7 +148,7 @@ public class IngredientsStepsFragment extends Fragment implements IngredientsSte
     public void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putParcelable(LIST_STATE, ingredientsStepsList.getLayoutManager().onSaveInstanceState());
-        outState.putParcelableArrayList(DATA_STATE, adapterData);
+        outState.putParcelableArray(DATA_STATE, adapterData);
     }
 
     @Override
@@ -193,7 +193,7 @@ public class IngredientsStepsFragment extends Fragment implements IngredientsSte
         ingredientsStepsList.setLayoutManager(new LinearLayoutManager(getContext()));
         ingredientsStepsList.setHasFixedSize(true);
         ingredientsStepsAdapter = new IngredientsStepsAdapter();
-        ingredientsStepsAdapter.setCardItemClickListerner(this);
+        ingredientsStepsAdapter.setCardItemClickListener(this);
         ingredientsStepsList.setAdapter(ingredientsStepsAdapter);
     }
 
@@ -219,36 +219,47 @@ public class IngredientsStepsFragment extends Fragment implements IngredientsSte
                 i++;
             }
             ingredientModelAdapter.setIngredient(ingredientStrBuilder.toString());
-            adapterData.add(ingredientModelAdapter);
+            adapterData[0] = ingredientModelAdapter;
         }
     }
 
     private void addSteps(Cursor data) {
 
-        if (data.moveToFirst()) {
-
-            while (data.moveToNext()) {
-                StepModelAdapter stepModelAdapter = new StepModelAdapter();
-                stepModelAdapter.setId(data.getInt(data.getColumnIndex(StepContract._ID)));
-                stepModelAdapter.setViewType(IngredientsStepsAdapter.STEP_VIEW_TYPE);
-                stepModelAdapter.setDescription(data.getString(data.getColumnIndex(StepContract.DESCRIPTION)));
-                stepModelAdapter.setShortDescription(data.getString(data.getColumnIndex(StepContract.SHORT_DESCRIPTION)));
-                stepModelAdapter.setThumbnailURL(data.getString(data.getColumnIndex(StepContract.THUMBNAIL_URL)));
-                stepModelAdapter.setVideoURL(data.getString(data.getColumnIndex(StepContract.VIDEO_URL)));
-                adapterData.add(stepModelAdapter);
-            }
+        int i = 1;
+        while (data.moveToNext()) {
+            StepModelAdapter stepModelAdapter = new StepModelAdapter();
+            stepModelAdapter.setId(data.getInt(data.getColumnIndex(StepContract._ID)));
+            stepModelAdapter.setViewType(IngredientsStepsAdapter.STEP_VIEW_TYPE);
+            stepModelAdapter.setDescription(data.getString(data.getColumnIndex(StepContract.DESCRIPTION)));
+            stepModelAdapter.setShortDescription(data.getString(data.getColumnIndex(StepContract.SHORT_DESCRIPTION)));
+            stepModelAdapter.setThumbnailURL(data.getString(data.getColumnIndex(StepContract.THUMBNAIL_URL)));
+            stepModelAdapter.setVideoURL(data.getString(data.getColumnIndex(StepContract.VIDEO_URL)));
+            adapterData[i] = stepModelAdapter;
+            i++;
         }
     }
 
     private void loadFragment(Fragment fragment) {
         if (getActivity() != null) {
-
             FragmentTransaction transaction = getActivity().getSupportFragmentManager().beginTransaction();
+            int lastPosition = getActivity().getSupportFragmentManager().getFragments().size() - 1;
+            //boolean addToBackStack = !(getActivity().getSupportFragmentManager().getFragments().get(lastPosition) instanceof StepFragment);
+
             if (!getResources().getBoolean(R.bool.isSmallestWidth)) {
                 transaction.addToBackStack(null);
+                transaction.replace(R.id.fragmentContainer, fragment);
+                Fragment lastFragment = getActivity().getSupportFragmentManager().getFragments().get(lastPosition);
+                if (lastFragment instanceof StepFragment) {
+                    transaction.remove(lastFragment);
+                }
             }
-            transaction.replace(R.id.fragmentContainer, fragment).commit();
+
+            transaction.commit();
         }
+    }
+
+    public void clickStepPosition(int position) {
+        ingredientsStepsAdapter.clickStepPosition(position);
     }
 
     @Override
@@ -258,15 +269,15 @@ public class IngredientsStepsFragment extends Fragment implements IngredientsSte
     }
 
     @Override
-    public void onStepCardItemClick(long stepId, int position) {
-        StepFragment fragment = StepFragment.newInstance(stepId, position, recipeTitle, detailsActivityFragmentListener);
+    public void onStepCardItemClick(long stepId, int stepPosition, Long nextStepId, Integer nextStepPosition) {
+        StepFragmentBundle bundle = new StepFragmentBundle(stepId, stepPosition, nextStepId, nextStepPosition, recipeTitle);
+        StepFragment fragment = StepFragment.newInstance(bundle, detailsActivityFragmentListener);
         loadFragment(fragment);
     }
 
     @Override
     public void onPreExecute() {
         progress.setVisibility(View.VISIBLE);
-        adapterData = new ArrayList<>();
     }
 
     @Override
@@ -275,14 +286,14 @@ public class IngredientsStepsFragment extends Fragment implements IngredientsSte
     }
 
     @Override
-    public void onPostExecute(List<BaseModelAdapter> baseModelAdapters) {
+    public void onPostExecute(BaseModelAdapter[] baseModelAdapters) {
         ingredientsStepsAdapter.swipeData(baseModelAdapters);
         ingredientsStepsList.getLayoutManager().onRestoreInstanceState(listState);
         progress.setVisibility(View.GONE);
     }
 
     @Override
-    public void onCancelled(List<BaseModelAdapter> baseModelAdapters) {
+    public void onCancelled(BaseModelAdapter[] baseModelAdapters) {
 
     }
 
@@ -292,12 +303,13 @@ public class IngredientsStepsFragment extends Fragment implements IngredientsSte
     }
 
     @Override
-    public List<BaseModelAdapter> doInBackground(Long... longs) {
+    public BaseModelAdapter[] doInBackground(Long... longs) {
 
         if (getContext() != null) {
             Cursor ingredientCursor = IngredientsProviderUtil.getIngredientsByRecipeId(recipeId, getContext());
             Cursor stepCursor = StepsProviderUtil.getStepsByRecipeId(recipeId, getContext());
 
+            adapterData = new BaseModelAdapter[1 + stepCursor.getCount()];
             addIngredients(ingredientCursor);
             addSteps(stepCursor);
         }

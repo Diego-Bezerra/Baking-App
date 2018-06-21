@@ -7,8 +7,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import java.util.List;
-
 import br.com.bezerra.diego.bakingapp.R;
 import br.com.bezerra.diego.bakingapp.gui.detailsActivity.BaseModelAdapter;
 import butterknife.BindView;
@@ -19,42 +17,55 @@ public class IngredientsStepsAdapter extends RecyclerView.Adapter<RecyclerView.V
     public static final int INGREDIENT_VIEW_TYPE = 0;
     public static final int STEP_VIEW_TYPE = 1;
 
-    private List<BaseModelAdapter> mData;
-    private CardItemClickListerner cardItemClickListerner;
+    private BaseModelAdapter[] mData;
+    private CardItemClickListener cardItemClickListener;
 
     @Override
     public void onClick(View v) {
-        if (cardItemClickListerner != null) {
+        if (cardItemClickListener != null) {
 
             int position = (int) v.getTag();
             int viewType = getItemViewType(position);
 
             switch (viewType) {
                 case INGREDIENT_VIEW_TYPE:
-                    IngredientModelAdapter ingredientModelAdapter = (IngredientModelAdapter) mData.get(position);
-                    cardItemClickListerner.onIngredientCardItemClick(ingredientModelAdapter.getRecipeId());
+                    IngredientModelAdapter ingredientModelAdapter = (IngredientModelAdapter) mData[position];
+                    cardItemClickListener.onIngredientCardItemClick(ingredientModelAdapter.getRecipeId());
                     break;
                 case STEP_VIEW_TYPE:
-                    StepModelAdapter stepModelAdapter = (StepModelAdapter) mData.get(position);
-                    cardItemClickListerner.onStepCardItemClick(stepModelAdapter.getId(), position);
+                    clickStepPosition(position);
                     break;
             }
         }
     }
 
-    public interface CardItemClickListerner {
+    public interface CardItemClickListener {
         void onIngredientCardItemClick(long recipeId);
 
-        void onStepCardItemClick(long stepId, int position);
+        void onStepCardItemClick(long stepId, int stepPosition, Long nextStepId, Integer nextStepPosition);
     }
 
-    public void swipeData(List<BaseModelAdapter> data) {
+    public void swipeData(BaseModelAdapter[] data) {
         mData = data;
         this.notifyDataSetChanged();
     }
 
-    public void setCardItemClickListerner(CardItemClickListerner cardItemClickListerner) {
-        this.cardItemClickListerner = cardItemClickListerner;
+    public void clickStepPosition(int position) {
+        StepModelAdapter stepModelAdapter = (StepModelAdapter) mData[position];
+        long stepId = stepModelAdapter.getId();
+        Long nextStepId = null;
+        Integer nextStepPosition = null;
+
+        if (position + 1 < mData.length) {
+            StepModelAdapter nextStep = (StepModelAdapter) mData[position + 1];
+            nextStepId = nextStep.getId();
+            nextStepPosition = position + 1;
+        }
+        cardItemClickListener.onStepCardItemClick(stepId, position, nextStepId, nextStepPosition);
+    }
+
+    public void setCardItemClickListener(CardItemClickListener cardItemClickListener) {
+        this.cardItemClickListener = cardItemClickListener;
     }
 
     @NonNull
@@ -81,11 +92,11 @@ public class IngredientsStepsAdapter extends RecyclerView.Adapter<RecyclerView.V
         switch (typeView) {
             case INGREDIENT_VIEW_TYPE:
                 IngredientViewHolder ingredientViewHolder = (IngredientViewHolder) holder;
-                final IngredientModelAdapter ingredient = (IngredientModelAdapter) mData.get(position);
+                final IngredientModelAdapter ingredient = (IngredientModelAdapter) mData[position];
                 ingredientViewHolder.bind(ingredient);
                 break;
             case STEP_VIEW_TYPE:
-                StepModelAdapter step = (StepModelAdapter) mData.get(position);
+                StepModelAdapter step = (StepModelAdapter) mData[position];
                 ((StepViewHolder) holder).bind(step);
                 break;
             default:
@@ -95,12 +106,12 @@ public class IngredientsStepsAdapter extends RecyclerView.Adapter<RecyclerView.V
 
     @Override
     public int getItemCount() {
-        return mData != null ? mData.size() : 0;
+        return mData != null ? mData.length : 0;
     }
 
     @Override
     public int getItemViewType(int position) {
-        return mData.get(position).getViewType();
+        return mData[position].getViewType();
     }
 
     static class IngredientViewHolder extends RecyclerView.ViewHolder {
