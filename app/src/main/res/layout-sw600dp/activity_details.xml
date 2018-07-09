@@ -7,6 +7,7 @@
     <fragment
         android:id="@+id/ingredientsStepsFragment"
         android:name="br.com.bezerra.diego.bakingapp.gui.detailsActivity.ingredientStep.IngredientsStepsFragment"
+        android:tag="@string/ingredients_steps_fragment_tag"
         android:layout_width="0dp"
         android:layout_height="match_parent"
         android:layout_weight="0.8" />
@@ -21,6 +22,5 @@
         android:layout_width="0dp"
         android:layout_height="match_parent"
         android:layout_weight="1" />
-
 
 </LinearLayout>

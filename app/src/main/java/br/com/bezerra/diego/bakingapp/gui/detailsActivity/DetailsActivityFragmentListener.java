@@ -5,6 +5,6 @@ import android.support.annotation.NonNull;
 import java.io.Serializable;
 
 public interface DetailsActivityFragmentListener extends Serializable {
-    void setDefaultTitle();
-    void nextStep(@NonNull Integer position);
+    void clickNextStep(@NonNull Integer position);
+    void clickIngredient();
 }

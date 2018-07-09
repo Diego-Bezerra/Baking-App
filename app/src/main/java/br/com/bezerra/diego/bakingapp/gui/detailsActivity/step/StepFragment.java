@@ -11,7 +11,6 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
-import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -46,10 +45,10 @@ import br.com.bezerra.diego.bakingapp.util.AsyncTaskUtil;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import butterknife.Optional;
 
 public class StepFragment extends BaseFragment implements ExoPlayer.EventListener, AsyncTaskUtil.AsyncTaskListener<Long, Void, StepModelData> {
 
-    public static final String FRAGMENT_TAG = "StepFragment";
     public static final String DATA_STATE = "data_state";
 
     @Nullable
@@ -82,7 +81,6 @@ public class StepFragment extends BaseFragment implements ExoPlayer.EventListene
 
     public static StepFragment newInstance(StepFragmentBundle stepFragmentBundle, DetailsActivityFragmentListener detailsActivityFragmentListener) {
         StepFragment stepFragment = new StepFragment();
-        stepFragment.fragmentTag = FRAGMENT_TAG;
         Bundle bundle = new Bundle();
         bundle.putParcelable(DetailsActivity.STEP_FRAGMENT_EXTRA, stepFragmentBundle);
         bundle.putSerializable(DetailsActivity.FRAGMENT_LISTENER_EXTRA, detailsActivityFragmentListener);
@@ -125,7 +123,6 @@ public class StepFragment extends BaseFragment implements ExoPlayer.EventListene
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        AppCompatActivity activity = (AppCompatActivity) getActivity();
         if (activity != null) {
             if (!getResources().getBoolean(R.bool.isSmallestWidth) && activity.getSupportActionBar() != null) {
                 String title = String.format(getString(R.string.recipe_step_title_format), bundle.getRecipeTitle(), bundle.getStepPosition());
@@ -166,11 +163,16 @@ public class StepFragment extends BaseFragment implements ExoPlayer.EventListene
         }
     }
 
+    private void releasePlayer() {
+        //mNotificationManager.cancelAll();
+        mExoPlayer.stop();
+        mExoPlayer.release();
+        mExoPlayer = null;
+    }
+
     private void hideSystemUI() {
 
-        if (getActivity() == null) return;
-
-        View decorView = getActivity().getWindow().getDecorView();
+        View decorView = activity.getWindow().getDecorView();
         if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             decorView.setSystemUiVisibility(
                     View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
@@ -190,6 +192,14 @@ public class StepFragment extends BaseFragment implements ExoPlayer.EventListene
                             | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
                             | View.SYSTEM_UI_FLAG_FULLSCREEN);
         }
+    }
+
+    private void showSystemUI() {
+        View decorView = activity.getWindow().getDecorView();
+        decorView.setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                        | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
     }
 
     @Override
@@ -214,6 +224,9 @@ public class StepFragment extends BaseFragment implements ExoPlayer.EventListene
         if (asyncTaskUtil != null) {
             asyncTaskUtil.cancel(true);
         }
+        if (!getResources().getBoolean(R.bool.isSmallestWidth)) {
+            showSystemUI();
+        }
     }
 
     @Override
@@ -224,6 +237,7 @@ public class StepFragment extends BaseFragment implements ExoPlayer.EventListene
     @Override
     public void onDestroy() {
         super.onDestroy();
+        releasePlayer();
     }
 
     @Override
@@ -324,10 +338,13 @@ public class StepFragment extends BaseFragment implements ExoPlayer.EventListene
         return null;
     }
 
+    @Optional
     @OnClick(R.id.nextButton)
     public void nextButtonAction(Button button) {
         if (bundle.getNextStepPosition() != null) {
-            detailsActivityFragmentListener.nextStep(bundle.getNextStepPosition());
+            detailsActivityFragmentListener.clickNextStep(bundle.getNextStepPosition());
         }
     }
+
+
 }

@@ -26,6 +26,10 @@
             android:label="@string/activity_detail_label"
             android:launchMode="singleTop"
             android:theme="@style/AppTheme" />
+        <activity
+            android:name=".gui.StepActivity.StepActivity"
+            android:label="@string/activity_step_label"
+            android:launchMode="singleTop" />
 
         <provider
             android:name=".data.database.generated.BakingAppProvider"

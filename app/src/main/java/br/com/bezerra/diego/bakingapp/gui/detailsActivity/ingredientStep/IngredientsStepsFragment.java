@@ -9,7 +9,6 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.ActionBar;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -37,9 +36,9 @@ import butterknife.ButterKnife;
 public class IngredientsStepsFragment extends BaseFragment implements IngredientsStepsAdapter.CardItemClickListener
         , AsyncTaskUtil.AsyncTaskListener<Long, Void, BaseModelAdapter[]> {
 
-    public static final String FRAGMENT_TAG = "IngredientsStepsFragment";
     private static String LIST_STATE = "LIST_STATE";
     private static String DATA_STATE = "DATA_STATE";
+    private static String LAST_SELECTED_ITEM_STATE = "LAST_SELECTED_ITEM_STATE";
 
     @BindView(R.id.ingredientsStepsList)
     RecyclerView ingredientsStepsList;
@@ -52,25 +51,25 @@ public class IngredientsStepsFragment extends BaseFragment implements Ingredient
     private long recipeId;
     private String recipeTitle;
     private Parcelable listState;
+    private Integer lastSelectedItem;
     private BaseModelAdapter[] adapterData;
     private DetailsActivityFragmentListener detailsActivityFragmentListener;
     private AsyncTaskUtil<Long, Void, BaseModelAdapter[]> asyncTaskUtil;
 
     public static IngredientsStepsFragment newInstance(long recipeId, String recipeTitle, DetailsActivityFragmentListener detailsActivityFragmentListener) {
         IngredientsStepsFragment fragment = new IngredientsStepsFragment();
-        fragment.fragmentTag = FRAGMENT_TAG;
         Bundle bundle = new Bundle();
         bundle.putLong(DetailsActivity.RECIPE_ID_EXTRA, recipeId);
         bundle.putString(DetailsActivity.RECIPE_TITLE_EXTRA, recipeTitle);
         bundle.putSerializable(DetailsActivity.FRAGMENT_LISTENER_EXTRA, detailsActivityFragmentListener);
         fragment.setArguments(bundle);
+        fragment.setRetainInstance(true);
 
         return fragment;
     }
 
     public void loadRecipe(long recipeId, String recipeTitle) {
 
-        AppCompatActivity activity = ((AppCompatActivity) getActivity());
         ActionBar actionBar = activity.getSupportActionBar();
         if (actionBar != null) {
             actionBar.setHomeButtonEnabled(true);
@@ -85,6 +84,17 @@ public class IngredientsStepsFragment extends BaseFragment implements Ingredient
             asyncTaskUtil.execute(recipeId);
         } else {
             ingredientsStepsAdapter.swipeData(adapterData);
+            loadFisrtStep();
+        }
+    }
+
+    private void loadFisrtStep() {
+        if (getResources().getBoolean(R.bool.isSmallestWidth)) {
+            if (lastSelectedItem != null) {
+                detailsActivityFragmentListener.clickNextStep(lastSelectedItem);
+            } else {
+                detailsActivityFragmentListener.clickIngredient();
+            }
         }
     }
 
@@ -131,6 +141,9 @@ public class IngredientsStepsFragment extends BaseFragment implements Ingredient
             if (savedInstanceState.containsKey(DATA_STATE)) {
                 adapterData = (BaseModelAdapter[]) savedInstanceState.getParcelableArray(DATA_STATE);
             }
+            if (savedInstanceState.containsKey(LAST_SELECTED_ITEM_STATE)) {
+                lastSelectedItem = savedInstanceState.getInt(LAST_SELECTED_ITEM_STATE);
+            }
         }
         setupIngredientsStepsList();
 
@@ -149,6 +162,7 @@ public class IngredientsStepsFragment extends BaseFragment implements Ingredient
         super.onSaveInstanceState(outState);
         outState.putParcelable(LIST_STATE, ingredientsStepsList.getLayoutManager().onSaveInstanceState());
         outState.putParcelableArray(DATA_STATE, adapterData);
+        outState.putInt(LAST_SELECTED_ITEM_STATE, ingredientsStepsAdapter.getLastClickedViewPosition());
     }
 
     @Override
@@ -192,9 +206,13 @@ public class IngredientsStepsFragment extends BaseFragment implements Ingredient
     private void setupIngredientsStepsList() {
         ingredientsStepsList.setLayoutManager(new LinearLayoutManager(getContext()));
         ingredientsStepsList.setHasFixedSize(true);
-        ingredientsStepsAdapter = new IngredientsStepsAdapter();
+        ingredientsStepsAdapter = new IngredientsStepsAdapter(getResources().getBoolean(R.bool.isSmallestWidth));
         ingredientsStepsAdapter.setCardItemClickListener(this);
         ingredientsStepsList.setAdapter(ingredientsStepsAdapter);
+    }
+
+    public void setDetailsActivityFragmentListener(DetailsActivityFragmentListener detailsActivityFragmentListener) {
+        this.detailsActivityFragmentListener = detailsActivityFragmentListener;
     }
 
     private void addIngredients(Cursor data) {
@@ -242,24 +260,20 @@ public class IngredientsStepsFragment extends BaseFragment implements Ingredient
     private void loadFragment(Fragment fragment) {
         if (getActivity() != null) {
             FragmentTransaction transaction = getActivity().getSupportFragmentManager().beginTransaction();
-            int lastPosition = getActivity().getSupportFragmentManager().getFragments().size() - 1;
-            //boolean addToBackStack = !(getActivity().getSupportFragmentManager().getFragments().get(lastPosition) instanceof StepFragment);
-
             if (!getResources().getBoolean(R.bool.isSmallestWidth)) {
+                getActivity().getSupportFragmentManager().popBackStack();
                 transaction.addToBackStack(null);
-                transaction.replace(R.id.fragmentContainer, fragment);
-                Fragment lastFragment = getActivity().getSupportFragmentManager().getFragments().get(lastPosition);
-                if (lastFragment instanceof StepFragment) {
-                    transaction.remove(lastFragment);
-                }
             }
-
-            transaction.commit();
+            transaction.replace(R.id.fragmentContainer, fragment).commit();
         }
     }
 
     public void clickStepPosition(int position) {
         ingredientsStepsAdapter.clickStepPosition(position);
+    }
+
+    public void clickIngredientPosition() {
+        ingredientsStepsAdapter.clickIngredientPosition();
     }
 
     @Override
@@ -289,6 +303,7 @@ public class IngredientsStepsFragment extends BaseFragment implements Ingredient
     public void onPostExecute(BaseModelAdapter[] baseModelAdapters) {
         ingredientsStepsAdapter.swipeData(baseModelAdapters);
         ingredientsStepsList.getLayoutManager().onRestoreInstanceState(listState);
+        loadFisrtStep();
         progress.setVisibility(View.GONE);
     }
 

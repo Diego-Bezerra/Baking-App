@@ -6,6 +6,7 @@
     <string name="ingredients">Ingredients</string>
     <string name="step_title_format">Step %d</string>
     <string name="activity_detail_label">Detail Activity</string>
+    <string name="activity_step_label">Step Activity</string>
     <string name="step">Step</string>
     <string name="ingredient_quantity_format">quantity: %.2f</string>
     <string name="ingredient_measure_format">measure: %s</string>
@@ -19,5 +20,8 @@
     <string name="nav_header_desc">Navigation header</string>
     <string name="action_settings">Settings</string>
     <string name="no_results_for_selected_recipe">No results for selected recipe :(</string>
+    <string name="ingredients_steps_fragment_tag">IngredientsStepsFragment</string>
+    <string name="step_fragment_tag">StepFragment</string>
+    <string name="ingredients_fragment_tag">IngredientsFragment</string>
     <string name="next">Next</string>
 </resources>

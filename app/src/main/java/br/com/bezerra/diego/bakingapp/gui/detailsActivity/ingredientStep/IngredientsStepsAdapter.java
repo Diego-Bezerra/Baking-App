@@ -1,5 +1,6 @@
 package br.com.bezerra.diego.bakingapp.gui.detailsActivity.ingredientStep;
 
+import android.graphics.Color;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -19,6 +20,12 @@ public class IngredientsStepsAdapter extends RecyclerView.Adapter<RecyclerView.V
 
     private BaseModelAdapter[] mData;
     private CardItemClickListener cardItemClickListener;
+    private int lastClickedViewPosition;
+    private boolean isSmallWidth;
+
+    public IngredientsStepsAdapter(boolean isSmallWidth) {
+        this.isSmallWidth = isSmallWidth;
+    }
 
     @Override
     public void onClick(View v) {
@@ -29,8 +36,7 @@ public class IngredientsStepsAdapter extends RecyclerView.Adapter<RecyclerView.V
 
             switch (viewType) {
                 case INGREDIENT_VIEW_TYPE:
-                    IngredientModelAdapter ingredientModelAdapter = (IngredientModelAdapter) mData[position];
-                    cardItemClickListener.onIngredientCardItemClick(ingredientModelAdapter.getRecipeId());
+                    clickIngredientPosition();
                     break;
                 case STEP_VIEW_TYPE:
                     clickStepPosition(position);
@@ -47,21 +53,48 @@ public class IngredientsStepsAdapter extends RecyclerView.Adapter<RecyclerView.V
 
     public void swipeData(BaseModelAdapter[] data) {
         mData = data;
-        this.notifyDataSetChanged();
+        if (mData != null) {
+            if (mData.length > lastClickedViewPosition) {
+                mData[lastClickedViewPosition].setSelected(true);
+            }
+            this.notifyDataSetChanged();
+        }
+    }
+
+    private void setSelectedViewBackground(int position) {
+        if (isSmallWidth) {
+            mData[lastClickedViewPosition].setSelected(false);
+            mData[position].setSelected(true);
+            notifyItemChanged(lastClickedViewPosition);
+            notifyItemChanged(position);
+            lastClickedViewPosition = position;
+        }
+    }
+
+    public void clickIngredientPosition() {
+        setSelectedViewBackground(0);
+        IngredientModelAdapter ingredientModelAdapter = (IngredientModelAdapter) mData[0];
+        cardItemClickListener.onIngredientCardItemClick(ingredientModelAdapter.getRecipeId());
+        ingredientModelAdapter.setSelected(true);
     }
 
     public void clickStepPosition(int position) {
-        StepModelAdapter stepModelAdapter = (StepModelAdapter) mData[position];
-        long stepId = stepModelAdapter.getId();
-        Long nextStepId = null;
-        Integer nextStepPosition = null;
+        if (mData[position] instanceof StepModelAdapter) {
 
-        if (position + 1 < mData.length) {
-            StepModelAdapter nextStep = (StepModelAdapter) mData[position + 1];
-            nextStepId = nextStep.getId();
-            nextStepPosition = position + 1;
+            setSelectedViewBackground(position);
+
+            StepModelAdapter stepModelAdapter = (StepModelAdapter) mData[position];
+            long stepId = stepModelAdapter.getId();
+            Long nextStepId = null;
+            Integer nextStepPosition = null;
+
+            if (position + 1 < mData.length) {
+                StepModelAdapter nextStep = (StepModelAdapter) mData[position + 1];
+                nextStepId = nextStep.getId();
+                nextStepPosition = position + 1;
+            }
+            cardItemClickListener.onStepCardItemClick(stepId, position, nextStepId, nextStepPosition);
         }
-        cardItemClickListener.onStepCardItemClick(stepId, position, nextStepId, nextStepPosition);
     }
 
     public void setCardItemClickListener(CardItemClickListener cardItemClickListener) {
@@ -93,11 +126,11 @@ public class IngredientsStepsAdapter extends RecyclerView.Adapter<RecyclerView.V
             case INGREDIENT_VIEW_TYPE:
                 IngredientViewHolder ingredientViewHolder = (IngredientViewHolder) holder;
                 final IngredientModelAdapter ingredient = (IngredientModelAdapter) mData[position];
-                ingredientViewHolder.bind(ingredient);
+                ingredientViewHolder.bind(ingredient, isSmallWidth);
                 break;
             case STEP_VIEW_TYPE:
                 StepModelAdapter step = (StepModelAdapter) mData[position];
-                ((StepViewHolder) holder).bind(step);
+                ((StepViewHolder) holder).bind(step, isSmallWidth);
                 break;
             default:
                 throw new IllegalArgumentException("No viewType found.");
@@ -107,6 +140,14 @@ public class IngredientsStepsAdapter extends RecyclerView.Adapter<RecyclerView.V
     @Override
     public int getItemCount() {
         return mData != null ? mData.length : 0;
+    }
+
+    public void setLastClickedViewPosition(int lastClickedViewPosition) {
+        this.lastClickedViewPosition = lastClickedViewPosition;
+    }
+
+    public int getLastClickedViewPosition() {
+        return lastClickedViewPosition;
     }
 
     @Override
@@ -124,8 +165,12 @@ public class IngredientsStepsAdapter extends RecyclerView.Adapter<RecyclerView.V
             ButterKnife.bind(this, itemView);
         }
 
-        void bind(IngredientModelAdapter model) {
+        void bind(IngredientModelAdapter model, boolean isSmallWidth) {
             description.setText(model.getIngredient());
+            if (isSmallWidth) {
+                int color = model.isSelected() ? itemView.getContext().getResources().getColor(R.color.colorAccentWithAlpha) : Color.WHITE;
+                itemView.setBackgroundColor(color);
+            }
         }
     }
 
@@ -141,11 +186,15 @@ public class IngredientsStepsAdapter extends RecyclerView.Adapter<RecyclerView.V
             ButterKnife.bind(this, itemView);
         }
 
-        void bind(StepModelAdapter model) {
+        void bind(StepModelAdapter model, boolean isSmallWidth) {
             String stepTitle = String.format(itemView.getContext().getText(R.string.step_title_format).toString()
                     , getLayoutPosition());
             title.setText(stepTitle);
             description.setText(model.getShortDescription());
+            if (isSmallWidth) {
+                int color = model.isSelected() ? itemView.getContext().getResources().getColor(R.color.colorAccentWithAlpha) : Color.WHITE;
+                itemView.setBackgroundColor(color);
+            }
         }
     }
 }

@@ -26,7 +26,6 @@ import butterknife.ButterKnife;
 
 public class IngredientsFragment extends BaseFragment implements AsyncTaskUtil.AsyncTaskListener<Long, Void, IngredientModelAdapter[]> {
 
-    public static final String FRAGMENT_TAG = "IngredientsStepsFragment";
     private static String LIST_STATE = "LIST_STATE";
     private static String DATA_STATE = "DATA_STATE";
 
@@ -46,7 +45,6 @@ public class IngredientsFragment extends BaseFragment implements AsyncTaskUtil.A
 
     public static IngredientsFragment newInstance(long recipeId, String recipeTitle, DetailsActivityFragmentListener detailsActivityFragmentListener) {
         IngredientsFragment fragment = new IngredientsFragment();
-        fragment.fragmentTag = FRAGMENT_TAG;
         Bundle bundle = new Bundle();
         bundle.putLong(DetailsActivity.RECIPE_ID_EXTRA, recipeId);
         bundle.putString(DetailsActivity.RECIPE_TITLE_EXTRA, recipeTitle);

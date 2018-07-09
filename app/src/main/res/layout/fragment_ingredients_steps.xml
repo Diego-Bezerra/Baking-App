@@ -9,7 +9,7 @@
         android:id="@+id/ingredientsStepsList"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        tools:listitem="@layout/list_item_recipes" />
+        tools:listitem="@layout/list_item_step" />
 
     <ProgressBar
         android:id="@+id/progress"

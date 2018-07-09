@@ -33,6 +33,7 @@ public class DetailsActivity extends AppCompatActivity implements DetailsActivit
             recipeTitle = bundle.getString(RECIPE_TITLE_EXTRA, "");
             long recipeId = bundle.getLong(RECIPE_ID_EXTRA);
             boolean isSmallestWidth = getResources().getBoolean(R.bool.isSmallestWidth);
+            final String tag = getString(R.string.ingredients_steps_fragment_tag);
 
             if (!isSmallestWidth) {
                 BaseFragment fragment;
@@ -44,27 +45,36 @@ public class DetailsActivity extends AppCompatActivity implements DetailsActivit
                 }
 
                 getSupportFragmentManager().beginTransaction()
-                        .replace(R.id.fragmentContainer, fragment, fragment.getFragmentTag())
+                        .replace(R.id.fragmentContainer, fragment, tag)
                         .commit();
 
             } else {
-                IngredientsStepsFragment ingredientsStepsFragment = (IngredientsStepsFragment) getSupportFragmentManager().findFragmentById(R.id.ingredientsStepsFragment);
+                IngredientsStepsFragment ingredientsStepsFragment = (IngredientsStepsFragment) getSupportFragmentManager()
+                        .findFragmentById(R.id.ingredientsStepsFragment);
+                ingredientsStepsFragment.setDetailsActivityFragmentListener(this);
                 ingredientsStepsFragment.loadRecipe(recipeId, recipeTitle);
             }
         }
     }
 
     @Override
-    public void setDefaultTitle() {
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setTitle(recipeTitle);
+    public void clickNextStep(@NonNull Integer position) {
+
+        final String tag = getString(R.string.ingredients_steps_fragment_tag);
+
+        IngredientsStepsFragment ingredientsStepsFragment = (IngredientsStepsFragment) getSupportFragmentManager().findFragmentByTag(tag);
+        if (ingredientsStepsFragment != null) {
+            ingredientsStepsFragment.clickStepPosition(position);
         }
     }
 
     @Override
-    public void nextStep(@NonNull Integer position) {
-        IngredientsStepsFragment ingredientsStepsFragment = (IngredientsStepsFragment) getSupportFragmentManager().findFragmentByTag(IngredientsStepsFragment.FRAGMENT_TAG);
-        ingredientsStepsFragment.clickStepPosition(position);
+    public void clickIngredient() {
+        IngredientsStepsFragment ingredientsStepsFragment = (IngredientsStepsFragment) getSupportFragmentManager()
+                .findFragmentByTag(getString(R.string.ingredients_steps_fragment_tag));
+        if (ingredientsStepsFragment != null) {
+            ingredientsStepsFragment.clickIngredientPosition();
+        }
     }
 
     @Override
@@ -80,5 +90,10 @@ public class DetailsActivity extends AppCompatActivity implements DetailsActivit
             boolean canGoBack = getSupportFragmentManager().getBackStackEntryCount() > 0;
             getSupportActionBar().setDisplayHomeAsUpEnabled(canGoBack);
         }
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
     }
 }

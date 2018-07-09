@@ -8,7 +8,6 @@ import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -21,13 +20,14 @@ import android.widget.TextView;
 import br.com.bezerra.diego.bakingapp.BakingAppApplication;
 import br.com.bezerra.diego.bakingapp.R;
 import br.com.bezerra.diego.bakingapp.data.service.BakingAppServiceUtil;
+import br.com.bezerra.diego.bakingapp.gui.detailsActivity.BaseFragment;
 import br.com.bezerra.diego.bakingapp.gui.detailsActivity.DetailsActivity;
 import br.com.bezerra.diego.bakingapp.util.AsyncTaskUtil;
 import br.com.bezerra.diego.bakingapp.util.ConnectivityReceiver;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
-public class RecipesFragment extends Fragment implements AsyncTaskUtil.AsyncTaskListener<Void, Void, Cursor>
+public class RecipesFragment extends BaseFragment implements AsyncTaskUtil.AsyncTaskListener<Void, Void, Cursor>
         , BakingAppServiceUtil.NoConnectivityReceiverListener, ConnectivityReceiver.ConnectivityReceiverListener, RecipesListAdapter.RecipeAdapterItemClickListerner {
 
     private static String LIST_STATE = "LIST_STATE";
@@ -154,19 +154,17 @@ public class RecipesFragment extends Fragment implements AsyncTaskUtil.AsyncTask
 
     @Override
     public void noInternetConnection() {
-        if (getActivity() != null) {
-            BakingAppApplication.getInstance().setConnectivityListener(this);
-            IntentFilter filter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
-            mConnectivityReceiver = new ConnectivityReceiver();
-            getActivity().registerReceiver(mConnectivityReceiver, filter);
-        }
+        BakingAppApplication.getInstance().setConnectivityListener(this);
+        IntentFilter filter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
+        mConnectivityReceiver = new ConnectivityReceiver();
+        activity.registerReceiver(mConnectivityReceiver, filter);
     }
 
     @Override
     public void onNetworkConnectionChanged(boolean isConnected) {
-        if (isConnected && getActivity() != null) {
+        if (isConnected) {
             BakingAppApplication.getInstance().setConnectivityListener(null);
-            getActivity().unregisterReceiver(mConnectivityReceiver);
+            activity.unregisterReceiver(mConnectivityReceiver);
             mConnectivityReceiver = null;
         }
     }

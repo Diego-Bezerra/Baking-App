@@ -8,6 +8,7 @@
     android:layout_marginStart="@dimen/default_half"
     android:layout_marginLeft="@dimen/default_half"
     android:layout_marginEnd="@dimen/default_half"
+    android:background="@drawable/selected_item_view"
     android:layout_marginRight="@dimen/default_half">
 
     <LinearLayout

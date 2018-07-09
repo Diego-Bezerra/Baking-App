@@ -7,6 +7,7 @@ public class BaseModelAdapter implements Parcelable {
 
     private long id;
     private int viewType;
+    private boolean selected;
 
     protected BaseModelAdapter() {
 
@@ -15,6 +16,19 @@ public class BaseModelAdapter implements Parcelable {
     protected BaseModelAdapter(Parcel in) {
         id = in.readLong();
         viewType = in.readInt();
+        selected = in.readByte() != 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeLong(id);
+        dest.writeInt(viewType);
+        dest.writeByte((byte) (selected ? 1 : 0));
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
     }
 
     public static final Creator<BaseModelAdapter> CREATOR = new Creator<BaseModelAdapter>() {
@@ -45,14 +59,11 @@ public class BaseModelAdapter implements Parcelable {
         this.viewType = viewType;
     }
 
-    @Override
-    public int describeContents() {
-        return 0;
+    public boolean isSelected() {
+        return selected;
     }
 
-    @Override
-    public void writeToParcel(Parcel dest, int flags) {
-        dest.writeLong(id);
-        dest.writeInt(viewType);
+    public void setSelected(boolean selected) {
+        this.selected = selected;
     }
 }
