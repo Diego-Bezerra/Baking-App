@@ -5,6 +5,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
+import android.view.ViewGroup;
 
 import br.com.bezerra.diego.bakingapp.R;
 import br.com.bezerra.diego.bakingapp.gui.detailsActivity.ingredientStep.IngredientsStepsFragment;
@@ -36,6 +37,7 @@ public class DetailsActivity extends AppCompatActivity implements DetailsActivit
             final String tag = getString(R.string.ingredients_steps_fragment_tag);
 
             if (!isSmallestWidth) {
+
                 BaseFragment fragment;
                 if (savedInstanceState == null) {
                     fragment = IngredientsStepsFragment.newInstance(recipeId, recipeTitle, this);
@@ -78,11 +80,16 @@ public class DetailsActivity extends AppCompatActivity implements DetailsActivit
     }
 
     @Override
-    public boolean onSupportNavigateUp() {
-        getSupportFragmentManager().popBackStack();
-        return true;
-
+    public void setFitSystemWindow(boolean fit) {
+        ViewGroup viewGroup = findViewById(R.id.fragmentContainer);
+        viewGroup.setFitsSystemWindows(fit);
     }
+
+//    @Override
+//    public boolean onSupportNavigateUp() {
+//        getSupportFragmentManager().popBackStack();
+//        return true;
+//    }
 
     @Override
     public void onBackStackChanged() {
@@ -92,8 +99,5 @@ public class DetailsActivity extends AppCompatActivity implements DetailsActivit
         }
     }
 
-    @Override
-    public void onBackPressed() {
-        super.onBackPressed();
-    }
+
 }

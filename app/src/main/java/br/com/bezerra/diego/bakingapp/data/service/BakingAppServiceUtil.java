@@ -21,6 +21,10 @@ public class BakingAppServiceUtil {
         void noInternetConnection();
     }
 
+    public static synchronized Cursor syncRecipesData(final Context context) {
+        return syncRecipesData(context, null);
+    }
+
     public static synchronized Cursor syncRecipesData(final Context context
             , final NoConnectivityReceiverListener noConnectivityReceiverListener) {
 

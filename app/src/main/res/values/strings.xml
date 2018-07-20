@@ -24,4 +24,12 @@
     <string name="step_fragment_tag">StepFragment</string>
     <string name="ingredients_fragment_tag">IngredientsFragment</string>
     <string name="next">Next</string>
+    <string name="pause">Pause</string>
+    <string name="play">Play</string>
+    <string name="restart">Restart</string>
+    <string name="channel_name">Media playback</string>
+    <string name="channel_description">Media playback controls</string>
+    <string name="channel_id">media_playback_channel</string>
+    <string name="appwidget_text">Recipes</string>
+    <string name="add_widget">Add widget</string>
 </resources>

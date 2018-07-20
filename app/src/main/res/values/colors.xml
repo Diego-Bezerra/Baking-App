@@ -6,4 +6,5 @@
     <color name="colorAccentWithAlpha">#20FF4081</color>
     <color name="windowBackground">#F5F5F5</color>
     <color name="white">#FFF</color>
+    <color name="defaultTextColor">#ff000000</color>
 </resources>

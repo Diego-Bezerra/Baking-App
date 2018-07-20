@@ -14,6 +14,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
+
         <activity android:name=".gui.mainActivity.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -21,20 +22,43 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
         <activity
             android:name=".gui.detailsActivity.DetailsActivity"
             android:label="@string/activity_detail_label"
             android:launchMode="singleTop"
-            android:theme="@style/AppTheme" />
-        <activity
-            android:name=".gui.StepActivity.StepActivity"
-            android:label="@string/activity_step_label"
-            android:launchMode="singleTop" />
+            android:theme="@style/AppTheme"
+            android:parentActivityName=".gui.mainActivity.MainActivity">
+            <!-- The meta-data element is needed for versions lower than 4.1 -->
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".gui.mainActivity.MainActivity" />
+        </activity>
+
+        <service
+            android:name=".widget.ListViewWidgetService"
+            android:permission="android.permission.BIND_REMOTEVIEWS" />
 
         <provider
             android:name=".data.database.generated.BakingAppProvider"
             android:authorities="br.com.bezerra.diego.bakingapp.provider"
-            android:exported="false" />
+            android:exported="true" />
+
+        <receiver android:name=".gui.detailsActivity.step.StepFragment$MediaReceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.MEDIA_BUTTON" />
+            </intent-filter>
+        </receiver>
+
+        <receiver android:name=".widget.AppWidget">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/app_widget_info" />
+        </receiver>
 
     </application>
 

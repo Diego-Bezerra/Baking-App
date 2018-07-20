@@ -43,8 +43,7 @@ public class RecipesListAdapter extends RecyclerView.Adapter<RecipesListAdapter.
         }
 
         holder.title.setText(recipeModelAdapter.getName());
-        String servingFormat = holder.itemView.getContext().getString(R.string.serving_format);
-        holder.serving.setText(String.format(servingFormat, recipeModelAdapter.getServings() + ""));
+        holder.serving.setText(recipeModelAdapter.getStringFormatedServings(holder.itemView.getContext()));
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

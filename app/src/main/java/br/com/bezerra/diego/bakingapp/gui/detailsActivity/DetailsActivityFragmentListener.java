@@ -7,4 +7,5 @@ import java.io.Serializable;
 public interface DetailsActivityFragmentListener extends Serializable {
     void clickNextStep(@NonNull Integer position);
     void clickIngredient();
+    void setFitSystemWindow(boolean fit);
 }

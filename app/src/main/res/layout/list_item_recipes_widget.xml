@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/container"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:padding="@dimen/default_half">
+
+    <ImageView
+        android:id="@+id/recipeImage"
+        style="@style/LeftImageView"
+        android:padding="@dimen/default_half"
+        android:src="@drawable/ic_book" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/title"
+            style="@style/CardTitleText"
+            tools:text="Nutella Pie"
+            android:textColor="@color/defaultTextColor"/>
+
+        <TextView
+            android:id="@+id/serving"
+            style="@style/Base.TextAppearance.AppCompat.Subhead"
+            android:textColor="@color/defaultTextColor"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/default_half"
+            android:layout_marginLeft="@dimen/default_half"
+            android:layout_marginStart="@dimen/default_half"
+            tools:text="Serving: 8" />
+
+    </LinearLayout>
+
+</LinearLayout>

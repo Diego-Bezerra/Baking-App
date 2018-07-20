@@ -1,14 +1,18 @@
 package br.com.bezerra.diego.bakingapp.gui.detailsActivity.step;
 
 import android.app.NotificationManager;
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
 import android.content.res.Configuration;
 import android.database.Cursor;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.media.session.MediaButtonReceiver;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.view.LayoutInflater;
@@ -50,6 +54,7 @@ import butterknife.Optional;
 public class StepFragment extends BaseFragment implements ExoPlayer.EventListener, AsyncTaskUtil.AsyncTaskListener<Long, Void, StepModelData> {
 
     public static final String DATA_STATE = "data_state";
+    private static final String TAG = StepFragment.class.getSimpleName();
 
     @Nullable
     @BindView(R.id.container)
@@ -73,6 +78,7 @@ public class StepFragment extends BaseFragment implements ExoPlayer.EventListene
     private static MediaSessionCompat mMediaSession;
     private PlaybackStateCompat.Builder mStateBuilder;
     private NotificationManager mNotificationManager;
+    private MediaReceiver mediaReceiver;
 
     private StepFragmentBundle bundle;
     private AsyncTaskUtil<Long, Void, StepModelData> asyncTaskUtil;
@@ -109,6 +115,7 @@ public class StepFragment extends BaseFragment implements ExoPlayer.EventListene
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view;
         if (!getResources().getBoolean(R.bool.isSmallestWidth) && getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            detailsActivityFragmentListener.setFitSystemWindow(false);
             view = inflater.inflate(R.layout.fragment_step_land, container, false);
             hideSystemUI();
         } else {
@@ -135,6 +142,11 @@ public class StepFragment extends BaseFragment implements ExoPlayer.EventListene
         if (savedInstanceState != null && savedInstanceState.containsKey(DATA_STATE)) {
             stepData = savedInstanceState.getParcelable(DATA_STATE);
         }
+
+        mPlayerView.setDefaultArtwork(BitmapFactory.decodeResource
+                (getResources(), R.drawable.ic_play_video));
+        initializeMediaSession();
+
         if (stepData == null) {
             asyncTaskUtil = new AsyncTaskUtil<>(this);
             asyncTaskUtil.execute(bundle.getStepId());
@@ -144,27 +156,56 @@ public class StepFragment extends BaseFragment implements ExoPlayer.EventListene
     }
 
     private void initializePlayer(Uri mediaUri) {
-        if (mExoPlayer == null && getContext() != null) {
+        if (mExoPlayer == null) {
             // Create an instance of the ExoPlayer.
             TrackSelector trackSelector = new DefaultTrackSelector();
             LoadControl loadControl = new DefaultLoadControl();
-            mExoPlayer = ExoPlayerFactory.newSimpleInstance(getContext(), trackSelector, loadControl);
+            mExoPlayer = ExoPlayerFactory.newSimpleInstance(activity, trackSelector, loadControl);
             mPlayerView.setPlayer(mExoPlayer);
 
             // Set the ExoPlayer.EventListener to this activity.
             mExoPlayer.addListener(this);
 
             // Prepare the MediaSource.
-            String userAgent = Util.getUserAgent(getContext(), "BakingApp");
+            String userAgent = Util.getUserAgent(activity, "BakingApp");
             MediaSource mediaSource = new ExtractorMediaSource(mediaUri, new DefaultDataSourceFactory(
-                    getContext(), userAgent), new DefaultExtractorsFactory(), null, null);
+                    activity, userAgent), new DefaultExtractorsFactory(), null, null);
             mExoPlayer.prepare(mediaSource);
             mExoPlayer.setPlayWhenReady(true);
         }
     }
 
+    private void initializeMediaSession() {
+
+        // Create a MediaSessionCompat.
+        mMediaSession = new MediaSessionCompat(activity, TAG);
+
+        // Enable callbacks from MediaButtons and TransportControls.
+        mMediaSession.setFlags(
+                MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS |
+                        MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS);
+
+        // Do not let MediaButtons restart the player when the app is not visible.
+        mMediaSession.setMediaButtonReceiver(null);
+
+        // Set an initial PlaybackState with ACTION_PLAY, so media buttons can start the player.
+        mStateBuilder = new PlaybackStateCompat.Builder()
+                .setActions(
+                        PlaybackStateCompat.ACTION_PLAY |
+                                PlaybackStateCompat.ACTION_PAUSE |
+                                PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS |
+                                PlaybackStateCompat.ACTION_PLAY_PAUSE);
+
+        mMediaSession.setPlaybackState(mStateBuilder.build());
+
+        // MySessionCallback has methods that handle callbacks from a media controller.
+        mMediaSession.setCallback(new MySessionCallback());
+
+        // Start the Media Session since the activity is active.
+        mMediaSession.setActive(true);
+    }
+
     private void releasePlayer() {
-        //mNotificationManager.cancelAll();
         mExoPlayer.stop();
         mExoPlayer.release();
         mExoPlayer = null;
@@ -238,6 +279,8 @@ public class StepFragment extends BaseFragment implements ExoPlayer.EventListene
     public void onDestroy() {
         super.onDestroy();
         releasePlayer();
+        mMediaSession.setActive(false);
+        detailsActivityFragmentListener.setFitSystemWindow(true);
     }
 
     @Override
@@ -286,7 +329,14 @@ public class StepFragment extends BaseFragment implements ExoPlayer.EventListene
 
     @Override
     public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
-
+        if ((playbackState == ExoPlayer.STATE_READY) && playWhenReady) {
+            mStateBuilder.setState(PlaybackStateCompat.STATE_PLAYING,
+                    mExoPlayer.getCurrentPosition(), 1f);
+        } else if ((playbackState == ExoPlayer.STATE_READY)) {
+            mStateBuilder.setState(PlaybackStateCompat.STATE_PAUSED,
+                    mExoPlayer.getCurrentPosition(), 1f);
+        }
+        mMediaSession.setPlaybackState(mStateBuilder.build());
     }
 
     @Override
@@ -346,5 +396,31 @@ public class StepFragment extends BaseFragment implements ExoPlayer.EventListene
         }
     }
 
+    private class MySessionCallback extends MediaSessionCompat.Callback {
+        @Override
+        public void onPlay() {
+            mExoPlayer.setPlayWhenReady(true);
+        }
 
+        @Override
+        public void onPause() {
+            mExoPlayer.setPlayWhenReady(false);
+        }
+
+        @Override
+        public void onSkipToPrevious() {
+            mExoPlayer.seekTo(0);
+        }
+    }
+
+    public static class MediaReceiver extends BroadcastReceiver {
+
+        public MediaReceiver() {
+        }
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            MediaButtonReceiver.handleIntent(mMediaSession, intent);
+        }
+    }
 }

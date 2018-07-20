@@ -1,9 +1,11 @@
 package br.com.bezerra.diego.bakingapp.gui.mainActivity;
 
+import android.content.Context;
 import android.database.Cursor;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import br.com.bezerra.diego.bakingapp.R;
 import br.com.bezerra.diego.bakingapp.data.database.contract.RecipeContract;
 
 public class RecipeModelAdapter implements Parcelable {
@@ -71,6 +73,11 @@ public class RecipeModelAdapter implements Parcelable {
 
     public int getServings() {
         return servings;
+    }
+
+    public String getStringFormatedServings(Context context) {
+        String servingFormat = context.getString(R.string.serving_format);
+        return String.format(servingFormat, servings + "");
     }
 
     public void setServings(int servings) {
