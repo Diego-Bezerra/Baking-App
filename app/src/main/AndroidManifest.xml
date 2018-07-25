@@ -14,21 +14,21 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-
-        <activity android:name=".gui.mainActivity.MainActivity">
+        <activity android:name=".gui.mainActivity.MainActivity"
+            android:launchMode="singleTask">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
         <activity
             android:name=".gui.detailsActivity.DetailsActivity"
             android:label="@string/activity_detail_label"
-            android:launchMode="singleTop"
-            android:theme="@style/AppTheme"
-            android:parentActivityName=".gui.mainActivity.MainActivity">
+            android:launchMode="singleTask"
+            android:parentActivityName=".gui.mainActivity.MainActivity"
+            android:theme="@style/AppTheme">
+
             <!-- The meta-data element is needed for versions lower than 4.1 -->
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
@@ -49,7 +49,6 @@
                 <action android:name="android.intent.action.MEDIA_BUTTON" />
             </intent-filter>
         </receiver>
-
         <receiver android:name=".widget.AppWidget">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
@@ -59,7 +58,15 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/app_widget_info" />
         </receiver>
-
+        <receiver
+            android:name=".widget.WidgetReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="@string/widget_action" />
+                <category android:name="@string/widget_category" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>

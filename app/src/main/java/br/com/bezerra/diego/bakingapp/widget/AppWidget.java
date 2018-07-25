@@ -8,7 +8,6 @@ import android.content.Intent;
 import android.widget.RemoteViews;
 
 import br.com.bezerra.diego.bakingapp.R;
-import br.com.bezerra.diego.bakingapp.gui.detailsActivity.DetailsActivity;
 
 /**
  * Implementation of App Widget functionality.
@@ -42,13 +41,14 @@ public class AppWidget extends AppWidgetProvider {
         RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.app_widget);
 
         Intent intent = new Intent(context, ListViewWidgetService.class);
-        //intent.putExtra("PARENT_ACTIVITY_NAME", "MainActivity");
         views.setRemoteAdapter(R.id.list, intent);
 
-        Intent appIntent = new Intent(context, DetailsActivity.class);
-        PendingIntent appPendingIntent = PendingIntent.getActivity(context, 0, appIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        Intent appIntent = new Intent(context, WidgetReceiver.class);
+        appIntent.setAction(context.getString(R.string.widget_action));
+        appIntent.addCategory(context.getString(R.string.widget_category));
+        PendingIntent appPendingIntent = PendingIntent.getBroadcast(context, 0, appIntent, PendingIntent.FLAG_UPDATE_CURRENT);
         views.setPendingIntentTemplate(R.id.list, appPendingIntent);
-        // Handle empty gardens
+
         views.setEmptyView(R.id.list, R.id.noResults);
         return views;
     }

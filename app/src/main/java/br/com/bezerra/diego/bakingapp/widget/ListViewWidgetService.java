@@ -66,6 +66,7 @@ public class ListViewWidgetService extends RemoteViewsService {
 
             Bundle extras = new Bundle();
             extras.putLong(DetailsActivity.RECIPE_ID_EXTRA, recipe.getId());
+            extras.putString(DetailsActivity.RECIPE_TITLE_EXTRA, recipe.getName());
             Intent intent = new Intent();
             intent.putExtras(extras);
             views.setOnClickFillInIntent(R.id.container, intent);
