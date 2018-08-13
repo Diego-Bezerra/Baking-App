@@ -23,6 +23,7 @@
                                           <PersistentState>
                                             <option name="values">
                                               <map>
+                                                <entry key="scalingPercent" value="78" />
                                                 <entry key="trimmed" value="true" />
                                               </map>
                                             </option>
@@ -34,8 +35,8 @@
                                   <option name="values">
                                     <map>
                                       <entry key="backgroundAssetType" value="COLOR" />
-                                      <entry key="backgroundColor" value="ff4081" />
-                                      <entry key="foregroundImage" value="$USER_HOME$/Downloads/chef-recipes-book.png" />
+                                      <entry key="backgroundColor" value="3f51b5" />
+                                      <entry key="foregroundImage" value="$USER_HOME$/Downloads/recipe-book.png" />
                                     </map>
                                   </option>
                                 </PersistentState>

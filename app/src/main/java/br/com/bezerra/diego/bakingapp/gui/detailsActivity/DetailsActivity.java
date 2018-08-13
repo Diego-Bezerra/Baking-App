@@ -9,6 +9,7 @@ import android.view.ViewGroup;
 
 import br.com.bezerra.diego.bakingapp.R;
 import br.com.bezerra.diego.bakingapp.gui.detailsActivity.ingredientStep.IngredientsStepsFragment;
+import br.com.bezerra.diego.bakingapp.gui.detailsActivity.step.StepFragment;
 
 public class DetailsActivity extends AppCompatActivity implements DetailsActivityFragmentListener, FragmentManager.OnBackStackChangedListener {
 
@@ -85,11 +86,22 @@ public class DetailsActivity extends AppCompatActivity implements DetailsActivit
         viewGroup.setFitsSystemWindows(fit);
     }
 
-//    @Override
-//    public boolean onSupportNavigateUp() {
-//        getSupportFragmentManager().popBackStack();
-//        return true;
-//    }
+    @Override
+    public boolean onSupportNavigateUp() {
+        boolean isSmallestWidth = getResources().getBoolean(R.bool.isSmallestWidth);
+        if (!isSmallestWidth) {
+            int lastIndex = getSupportFragmentManager().getFragments().size() - 1;
+            if (getSupportFragmentManager().getFragments().get(lastIndex) instanceof StepFragment) {
+                getSupportFragmentManager().popBackStack();
+            } else {
+                finish();
+            }
+        } else {
+            finish();
+        }
+
+        return true;
+    }
 
     @Override
     public void onBackStackChanged() {
